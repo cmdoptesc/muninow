@@ -1,0 +1,76 @@
+<html>
+  <head>
+    <style type='text/css'>
+      #vis {
+        height: 300px;
+        width:  640px;
+        border: 1px solid black;
+        position: relative
+      }
+      #vis div {
+        font-family: helvetica, arial;
+        position: absolute;
+      }
+
+      #inputter {
+        width: 642px;
+      }
+    </style>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js"></script>
+    <script type="text/javascript">
+
+      var randX = function (i) {
+        return(Math.random()*600 + 'px');
+      };
+
+      var randY = function (i) {
+        return(Math.random()*280 + 'px');
+      };
+
+      $(function(){
+
+        var vis = d3.select("#vis");
+
+        var update = function(d) {
+          console.log("incoming array: ", d);
+
+          var word = vis.selectAll('div').data(d);
+
+            // need this to update
+              // the anonymous function iterates over each element in the array
+          word.text(function(d){ return d; });
+
+            // for new elements coming in
+          word.enter()
+              .append('div')
+                .text(function(d){ console.log(d);return d; })
+                .style('top', randY)
+                .style('left', randX)
+
+          word.exit().remove();
+        };
+
+        var oldInput = '';
+        $('#inputter').on("propertychange keyup input paste", function(event) {
+          var value = $('#inputter').val();
+          if(value!==oldInput) {
+            oldInput = value;
+            value = value.split(' ');
+            update(value);
+          }
+        });
+
+      });
+
+    </script>
+  </head>
+  <body>
+    <h1>Type it real good.</h1>
+    <div id="vis">
+    </div>
+
+    <input type="text" id="inputter">
+    </input>
+  </body>
+</html>
