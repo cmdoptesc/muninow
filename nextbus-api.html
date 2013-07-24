@@ -1,0 +1,128 @@
+<html>
+  <head>
+    <title></title>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js"></script>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.1/underscore-min.js"></script>
+  </head>
+  <body>
+
+    <form>
+      <select id="routeSelector"></select>
+
+      <select id="directionSelector"></select>
+
+      <select id="stopSelector"></select>
+
+      <select id="destSelector"></select>
+
+      <input type="button" value="Select Stop" id="buttonRoute" />
+
+    </form>
+
+    <script type="text/javascript">
+      var routeTag,
+        routes,
+        stopsInfo,
+        stopId;
+
+      $(function(){
+
+        $("#routeSelector").change(function(){
+          routeTag = $("#routeSelector").val();
+          getRoute(routeTag);
+        });
+
+        $("#directionSelector").change(function(){
+          var dirTag = $("#directionSelector").val();
+          displayStops(stopsInfo, routes, dirTag);
+        });
+
+        $("#stopSelector").change(function(){
+          stopId = $("#stopSelector").val();
+          $("svg").empty();
+          getStopTimes(stopId, routeTag, render);
+          redraw();
+        });
+
+        var redraw = function(){
+          setInterval(function(){
+            getStopTimes(stopId,routeTag,render);
+          }, 12000);
+        };
+
+        var w = 900,
+            h = 500;
+
+        var xPad = 10,
+            yPad = 10,
+            barPad = 1;
+
+        var vis = d3.select("body").append("svg")
+            .attr('width', w)
+            .attr('height', h)
+            .style('border', '1px solid black');
+
+        var xScale = d3.scale.linear()
+            .domain([])
+            .range([xPad,w-xPad]);
+
+        var render = function(dataset) {
+          console.log("drawing ", dataset);
+
+          var bar = vis.selectAll('rect').data(dataset);
+
+          bar.transition()
+              .duration(11500)
+              .attr("width", function(d) { return d/7; })
+              .attr("fill", function(d) {
+                var g = (1 - d/5000)*255;
+                return "rgb(0, "+ g +", 0)";
+              });
+
+          bar.enter()
+            .append('rect')
+            .attr("x", xPad)
+            .attr("y", function(d, i) {
+              return i * (h / (dataset.length)) + yPad;
+            })
+            .attr("width", function(d) {
+              return d/7;
+            })
+            .attr("height", (h - 2*yPad)/dataset.length - barPad)
+            .attr("fill", function(d) {
+              var g = (1 - d/5000)*255;
+              return "rgb(0, "+ g +", 0)";
+            });
+
+          bar.exit().remove();
+
+          vis.selectAll("text")
+            .data(dataset)
+            .enter()
+            .append("text")
+            .text(function(d) {
+              var minutes = Math.floor(d/60);
+              return minutes + ' min';
+            })
+            .attr("x", function(d) {
+              var fromEdge = 25;
+              if(Math.floor(d/60)>9) {
+                fromEdge = 35;
+              }
+              return d/7 - fromEdge;
+            })
+            .attr("y", function(d, i) {
+              return i * (h / (dataset.length)) + yPad + 10;
+            })
+            .attr("font-family", "sans-serif")
+            .attr("font-size", "11px")
+            .attr("fill", "white");
+        };
+
+      });
+    </script>
+    <script type="text/javascript" src="insert-routes.js"></script>
+    <script type="text/javascript" src="nextbus-talking.js"></script>
+  </body>
+</html>
