@@ -39,11 +39,18 @@
         });
 
         $("#stopSelector").change(function(){
+          // stopId = $("#stopSelector").val();
+          // $("svg").empty();
+          // getStopTimes(stopId, routeTag, render);
+          // redraw();
+        });
+
+        $("#buttonRoute").click(function(){
           stopId = $("#stopSelector").val();
           $("svg").empty();
           getStopTimes(stopId, routeTag, render);
           redraw();
-        });
+        })
 
         var redraw = function(){
           setInterval(function(){
@@ -58,32 +65,23 @@
             yPad = 10,
             barPad = 1;
 
-        var vis = d3.select("body").append("svg")
-            .attr('width', w)
-            .attr('height', h)
-            .style('border', '1px solid black');
-
-        var xScale = d3.scale.linear()
-            .domain([])
-            .range([xPad,w-xPad]);
+        var vis = d3.select("body").append("svg:svg")
+          .attr('width', w)
+          .attr('height', h)
+          .style('border', '1px solid black');
 
         var render = function(dataset) {
-          console.log("drawing ", dataset);
+
+          console.log("drawing", dataset);
+
+          var xScale = d3.scale.linear()
+              .domain([])
+              .range([xPad,w-xPad]);
 
           var bar = vis.selectAll('rect').data(dataset);
 
-          bar.transition()
-              .duration(11500)
-              .attr("width", function(d) { return d/7; })
-              .attr("fill", function(d) {
-                var g = (1 - d/5000)*255;
-                return "rgb(0, "+ g +", 0)";
-              });
-
-          bar.enter()
-            .append('rect')
-            .attr("x", xPad)
-            .attr("y", function(d, i) {
+          var barProperties = function(d3bar){
+            d3bar.attr("y", function(d, i) {
               return i * (h / (dataset.length)) + yPad;
             })
             .attr("width", function(d) {
@@ -91,33 +89,47 @@
             })
             .attr("height", (h - 2*yPad)/dataset.length - barPad)
             .attr("fill", function(d) {
-              var g = (1 - d/5000)*255;
+              var g = Math.floor((1 - d/5000)*255);
               return "rgb(0, "+ g +", 0)";
             });
+          }
+
+          var upBar = bar.transition().duration(11000);
+          barProperties(upBar);
+
+          var newBar = bar.enter().append('rect').attr("x", xPad);
+          barProperties(newBar);
 
           bar.exit().remove();
 
-          vis.selectAll("text")
-            .data(dataset)
-            .enter()
-            .append("text")
-            .text(function(d) {
-              var minutes = Math.floor(d/60);
-              return minutes + ' min';
-            })
-            .attr("x", function(d) {
-              var fromEdge = 25;
-              if(Math.floor(d/60)>9) {
-                fromEdge = 35;
-              }
-              return d/7 - fromEdge;
-            })
-            .attr("y", function(d, i) {
-              return i * (h / (dataset.length)) + yPad + 10;
-            })
-            .attr("font-family", "sans-serif")
-            .attr("font-size", "11px")
-            .attr("fill", "white");
+          var textProperties = function(d3min) {
+            d3min.text(function(d) {
+                var minutes = Math.floor(d/60);
+                return minutes + ' min';
+              })
+              .attr("x", function(d) {
+                var fromEdge = 25;
+                if(Math.floor(d/60)>9) {
+                  fromEdge = 35;
+                }
+                return d/7 - fromEdge;
+              })
+              .attr("y", function(d, i) {
+                return i * (h / (dataset.length)) + yPad + 10;
+              })
+              .attr("font-family", "sans-serif")
+              .attr("font-size", "11px")
+              .attr("fill", "white");
+          };
+
+          var minTxt = vis.selectAll("text").data(dataset);
+
+          var newMin = minTxt.enter().append("text");
+          textProperties(newMin);
+
+          var upMin = minTxt.transition().duration(11000);
+          textProperties(upMin);
+
         };
 
       });
