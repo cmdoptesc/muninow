@@ -45,15 +45,18 @@
           // redraw();
         });
 
+        var intId;
+
         $("#buttonRoute").click(function(){
           stopId = $("#stopSelector").val();
           $("svg").empty();
+          if(intId) { window.clearInterval(intId); }
           getStopTimes(stopId, routeTag, render);
-          redraw();
+          intId = redraw();
         })
 
         var redraw = function(){
-          setInterval(function(){
+          return setInterval(function(){
             getStopTimes(stopId,routeTag,render);
           }, 12000);
         };
@@ -65,71 +68,89 @@
             yPad = 10,
             barPad = 1;
 
+        var xScale = d3.scale.linear()
+                        .domain([])
+                        .range([xPad,w-xPad]);
+
         var vis = d3.select("body").append("svg:svg")
-          .attr('width', w)
-          .attr('height', h)
-          .style('border', '1px solid black');
+                    .attr('width', w)
+                    .attr('height', h)
+                    .style('border', '1px solid black');
+
+        var skipFlag = false;
 
         var render = function(dataset) {
+          console.log("dataset: ", dataset);
 
-          console.log("drawing", dataset);
+          var bar = vis.selectAll('rect');
+          var minTxt = vis.selectAll("text");
+          var tr_time = 10500;
 
-          var xScale = d3.scale.linear()
-              .domain([])
-              .range([xPad,w-xPad]);
-
-          var bar = vis.selectAll('rect').data(dataset);
-
-          var barProperties = function(d3bar){
-            d3bar.attr("y", function(d, i) {
-              return i * (h / (dataset.length)) + yPad;
-            })
-            .attr("width", function(d) {
-              return d/7;
-            })
-            .attr("height", (h - 2*yPad)/dataset.length - barPad)
-            .attr("fill", function(d) {
-              var g = Math.floor((1 - d/5000)*255);
-              return "rgb(0, "+ g +", 0)";
-            });
+          if(dataset[0]<25) {
+            if(!skipFlag) {
+              skipFlag = true;
+              tr_time = 5000;
+              if(bar[0] && bar[0][0]) {
+                bar[0][0].remove();
+                minTxt[0][0].remove();
+              }
+            } else {
+              dataset.splice(0,1);
+            }
+          } else {
+            skipFlag = false;
           }
 
-          var upBar = bar.transition().duration(11000);
-          barProperties(upBar);
+          var barProperties = function(obj){
+            obj.attr("y", function(d, i) {
+                  if(skipFlag && dataset[0]<25) { i--; }
+                  return i * (h / (dataset.length)) + yPad;
+                })
+                .attr("width", function(d) {
+                  return d/5;
+                })
+                .attr("height", (h - 2*yPad)/dataset.length - barPad)
+                .attr("fill", function(d) {
+                  var g = Math.floor((1 - d/5000)*255);
+                  return "rgb(0, "+ g +", 0)";
+                });
+          }
 
-          var newBar = bar.enter().append('rect').attr("x", xPad);
-          barProperties(newBar);
-
-          bar.exit().remove();
-
-          var textProperties = function(d3min) {
-            d3min.text(function(d) {
-                var minutes = Math.floor(d/60);
-                return minutes + ' min';
-              })
-              .attr("x", function(d) {
-                var fromEdge = 25;
-                if(Math.floor(d/60)>9) {
-                  fromEdge = 35;
-                }
-                return d/7 - fromEdge;
-              })
-              .attr("y", function(d, i) {
-                return i * (h / (dataset.length)) + yPad + 10;
-              })
-              .attr("font-family", "sans-serif")
-              .attr("font-size", "11px")
-              .attr("fill", "white");
+          var labelProperties = function(obj) {
+            obj.text(function(d) {
+                  var minutes = Math.floor(d/60);
+                  return minutes + ' min';
+                })
+                .attr("x", function(d) {
+                  var fromEdge = 20;
+                  if(Math.floor(d/60)>9) {
+                    fromEdge = 27;
+                  }
+                  return d/5 - fromEdge;
+                })
+                .attr("y", function(d, i) {
+                  if(skipFlag && dataset[0]<25) { i--; }
+                  return i * (h / (dataset.length)) + yPad + 10;
+                })
+                .attr("font-family", "sans-serif")
+                .attr("font-size", "11px")
+                .attr("fill", "white");
           };
 
-          var minTxt = vis.selectAll("text").data(dataset);
+          bar = bar.data(dataset);
 
+          var upBar = bar.transition().duration(tr_time);
+          barProperties(upBar);
+          var newBar = bar.enter().append('rect').attr("x", xPad);
+          barProperties(newBar);
+          bar.exit().remove();
+
+          minTxt = minTxt.data(dataset);
+
+          var upMin = minTxt.transition().duration(tr_time);
+          labelProperties(upMin);
           var newMin = minTxt.enter().append("text");
-          textProperties(newMin);
-
-          var upMin = minTxt.transition().duration(11000);
-          textProperties(upMin);
-
+          labelProperties(newMin);
         };
 
       });
