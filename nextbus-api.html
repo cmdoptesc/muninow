@@ -26,7 +26,7 @@
         stopsInfo,
         stopId;
 
-      $(function(){
+      //$(function(){
 
         $("#routeSelector").change(function(){
           routeTag = $("#routeSelector").val();
@@ -68,6 +68,8 @@
             yPad = 10,
             barPad = 1;
 
+        var divisor = 5;
+
         var xScale = d3.scale.linear()
                         .domain([])
                         .range([xPad,w-xPad]);
@@ -77,37 +79,38 @@
                     .attr('height', h)
                     .style('border', '1px solid black');
 
-        var skipFlag = false;
-
         var render = function(dataset) {
+
           console.log("dataset: ", dataset);
 
           var bar = vis.selectAll('rect');
           var minTxt = vis.selectAll("text");
+
+          var skipFlag = false;
           var tr_time = 10500;
 
-          if(dataset[0]<25) {
-            if(!skipFlag) {
+            // checking if the bus rolls off the stop
+            //    condition: if the last reported time was <30s and the new time is 90s greater
+          if(bar[0] && bar[0][0]) {
+            var pWidth = parseInt(d3.select(bar[0][0]).attr("width"))*divisor;
+            if( (pWidth < 30) && (parseInt(dataset[0]) - pWidth) > 90 ) {
               skipFlag = true;
               tr_time = 5000;
-              if(bar[0] && bar[0][0]) {
-                bar[0][0].remove();
-                minTxt[0][0].remove();
-              }
+              bar[0][0].remove();
+              minTxt[0][0].remove();
+              bar[0].splice(0,1);
+              minTxt[0].splice(0,1);
             } else {
-              dataset.splice(0,1);
+              skipFlag = false;
             }
-          } else {
-            skipFlag = false;
           }
 
           var barProperties = function(obj){
             obj.attr("y", function(d, i) {
-                  if(skipFlag && dataset[0]<25) { i--; }
                   return i * (h / (dataset.length)) + yPad;
                 })
                 .attr("width", function(d) {
-                  return d/5;
+                  return Math.floor(d/divisor);
                 })
                 .attr("height", (h - 2*yPad)/dataset.length - barPad)
                 .attr("fill", function(d) {
@@ -126,10 +129,9 @@
                   if(Math.floor(d/60)>9) {
                     fromEdge = 27;
                   }
-                  return d/5 - fromEdge;
+                  return Math.floor(d/divisor) - fromEdge;
                 })
                 .attr("y", function(d, i) {
-                  if(skipFlag && dataset[0]<25) { i--; }
                   return i * (h / (dataset.length)) + yPad + 10;
                 })
                 .attr("font-family", "sans-serif")
@@ -153,7 +155,7 @@
           labelProperties(newMin);
         };
 
-      });
+      //});
     </script>
     <script type="text/javascript" src="insert-routes.js"></script>
     <script type="text/javascript" src="nextbus-talking.js"></script>
