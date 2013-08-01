@@ -62,13 +62,13 @@ var displayStops = function(stopsInfo, routes, dirTag, selectedStop) {
   selectedStop = selectedStop || routes[dirTag].stops[0];
 
   _(routes[dirTag].stops).each(function(stoppy){
-    $stopSel.append('<option value="'+ stopsInfo[stoppy].stopId +'">'+ stopsInfo[stoppy].title +'</option>');
+    $stopSel.append('<option value="'+ stoppy +'">'+ stopsInfo[stoppy].title +'</option>');
   });
 };
 
-var getStopTimes = function(stopId, routeTag, cb){
-  routeTag = (routeTag) ? '&routeTag=' + routeTag : '';
-  var URLpredictions = 'http://webservices.nextbus.com/service/publicXMLFeed?command=predictions&a=sf-muni&stopId=' + stopId + routeTag;
+var getStopTimes = function(stopTag, routeTag, cb, svgElement, routeTitle){
+  var routeQuery = '&r=' + routeTag;
+  var URLpredictions = 'http://webservices.nextbus.com/service/publicXMLFeed?command=predictions&a=sf-muni&s=' + stopTag + routeQuery;
   var times = [];
 
   $.get(URLpredictions, function(xml){
@@ -76,7 +76,7 @@ var getStopTimes = function(stopId, routeTag, cb){
       times.push($(this).attr('seconds'));
     });
 
-    cb(times);
+    cb(times, svgElement, routeTitle);
   }, 'xml');
 };
 

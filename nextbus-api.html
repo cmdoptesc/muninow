@@ -20,13 +20,17 @@
 
     </form>
 
+    <div class="chartsDiv"></div>
+
     <script type="text/javascript">
       var routeTag,
         routes,
         stopsInfo,
         stopId;
 
-      //$(function(){
+      var charts = [];
+
+      $(function(){
 
         $("#routeSelector").change(function(){
           routeTag = $("#routeSelector").val();
@@ -39,27 +43,42 @@
         });
 
         $("#stopSelector").change(function(){
-          // stopId = $("#stopSelector").val();
-          // $("svg").empty();
-          // getStopTimes(stopId, routeTag, render);
-          // redraw();
-        });
+          stopId = $("#stopSelector").val();
 
-        var intId;
+          if(charts[0]) {
+            updateChart(stopId, routeTag, charts[charts.length-1]);
+          }
+        });
 
         $("#buttonRoute").click(function(){
           stopId = $("#stopSelector").val();
-          $("svg").empty();
-          if(intId) { window.clearInterval(intId); }
-          getStopTimes(stopId, routeTag, render);
-          intId = redraw();
+          charts.push(makeChart(stopId, routeTag));
         })
 
-        var redraw = function(){
-          return setInterval(function(){
-            getStopTimes(stopId,routeTag,render);
+        var makeChart = function(stop, route) {
+          console.log(route);
+          chart = {};
+          chart.vis = d3.select(".chartsDiv").insert("svg:svg",":first-child")
+                      .attr('width', w)
+                      .attr('height', h)
+                      .style('border', '1px solid black');
+
+          getStopTimes(stop, route, render, chart.vis, routesList[route]);
+          chart.timer = setInterval(function(){
+            getStopTimes(stop,route, render, chart.vis);
           }, 12000);
-        };
+
+          return chart;
+        }
+
+        var updateChart = function(stop, route, chart) {
+          window.clearInterval(chart.timer);
+          $(chart.vis[0]).empty();
+          getStopTimes(stop, route, render, chart.vis, routeList[route]);
+          chart.timer = setInterval(function(){
+            getStopTimes(stop,route, render, chart.vis);
+          }, 12000);
+        }
 
         var w = 900,
             h = 500;
@@ -74,12 +93,8 @@
                         .domain([])
                         .range([xPad,w-xPad]);
 
-        var vis = d3.select("body").append("svg:svg")
-                    .attr('width', w)
-                    .attr('height', h)
-                    .style('border', '1px solid black');
-
-        var render = function(dataset) {
+        var render = function(dataset, svgElement, route) {
+          var vis = svgElement;
 
           console.log("dataset: ", dataset);
 
@@ -103,6 +118,13 @@
             } else {
               skipFlag = false;
             }
+          }
+
+          if(route) {
+            vis.append("text")
+                .text(route)
+                .attr("x", w-xPad-30)
+                .attr("y", yPad);
           }
 
           var barProperties = function(obj){
@@ -155,7 +177,7 @@
           labelProperties(newMin);
         };
 
-      //});
+      });
     </script>
     <script type="text/javascript" src="insert-routes.js"></script>
     <script type="text/javascript" src="nextbus-talking.js"></script>
