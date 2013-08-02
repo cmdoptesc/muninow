@@ -1,9 +1,11 @@
+<!doctype html>
 <html>
   <head>
     <title></title>
-    <script type="text/javascript" src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
-    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js"></script>
-    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.1/underscore-min.js"></script>
+    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/1.0.0/handlebars.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.1/underscore-min.js"></script>
   </head>
   <body>
 
@@ -16,13 +18,13 @@
 
       <select id="destSelector"></select>
 
-      <input type="button" value="Add Stop" id="buttonRoute" />
+      <input type="button" value="Add Stop" id="buttonRoute">
 
     </form>
 
     <div class="chartsDiv"></div>
 
-    <script type="text/javascript">
+    <script>
       var routeTag,
         routes,
         stopsInfo,
@@ -31,6 +33,7 @@
       var charts = [];
 
       $(function(){
+        // NB.init(); // put goodies in here
 
         $("#routeSelector").change(function(){
           routeTag = $("#routeSelector").val();
@@ -56,8 +59,8 @@
 
       });
     </script>
-    <script type="text/javascript" src="nextbus-insert-routes.js"></script>
-    <script type="text/javascript" src="nextbus-api-forms.js"></script>
-    <script type="text/javascript" src="nextbus-d3.js"></script>
+    <script src="nextbus-insert-routes.js"></script>
+    <script src="nextbus-api-forms.js"></script>
+    <script src="nextbus-d3.js"></script>
   </body>
 </html>

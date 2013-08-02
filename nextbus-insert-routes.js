@@ -80,6 +80,7 @@ var routesInsert = [
   ["60", "Powell/Hyde Cable Car"],
   ["61", "California Cable Car"]];
 
+// This should be in some sort of init function
 _(routesInsert).each(function(route){
   $("#routeSelector").append('<option value="'+ route[0] +'">'+ route[1] +'</option>');
 });

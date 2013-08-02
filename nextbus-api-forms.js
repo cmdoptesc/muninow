@@ -28,17 +28,20 @@ var parseXMLstops = function(xml, cb) {
 
   stopsInfo = {};
   $(xml).find("body route > stop").each(function(){
-    var stopTag = $(this).attr("tag");
+    var $this = $(this);
+    var stopTag = $this.attr("tag");
     stopsInfo[stopTag] = {
-      'title' : $(this).attr("title"),
-      'lat' : $(this).attr("lat"),
-      'lon' : $(this).attr("lon"),
-      'stopId' : $(this).attr("stopId")
+      'title' : $this.attr("title"),
+      'lat' : $this.attr("lat"),
+      'lon' : $this.attr("lon"),
+      'stopId' : $this.attr("stopId")
     };
   });
 
   cb(stopsInfo, routes);
 };
+
+var routeOption = Handlebars.compile('<option value="{{key}}">{{title}}{{#if from}} from {{from}}{{/if}}</option>');
 
 var displayRoutes = function(stopsInfo, routes) {
   var $directionSel = $("#directionSelector");
@@ -48,8 +51,18 @@ var displayRoutes = function(stopsInfo, routes) {
   var opt1 = '';
 
   _(routes).each(function(route, key){
-    opt1 = ( route.direction==='Inbound' && Object.keys(routes).length>2 ) ? ' from '+ stopsInfo[route.stops[0]].title : '';
-    $directionSel.append('<option value="'+ key +'">'+ route.title + opt1 +'</option>');
+    var title = route.title;
+
+    //   title += ';
+    // $directionSel.append('<option value="'+ key +'">'+ route.title + opt1 +'</option>');
+
+    // Provide data
+    route.key = key;
+    if (route.direction === 'Inbound' && Object.keys(routes).length>2)
+      route.from = stopsInfo[route.stops[0]].title;
+
+    // Let the template handle printing it out
+    $directionSel.append(routeOption(route));
   });
 
   var dirTag = $("#directionSelector").val();
@@ -57,12 +70,17 @@ var displayRoutes = function(stopsInfo, routes) {
   displayStops(stopsInfo, routes, dirTag);
 };
 
+var stopOption = Handlebars.compile('<option value="{{value}}">{{title}}</option>');
+
 var displayStops = function(stopsInfo, routes, dirTag) {
   var $stopSel = $("#stopSelector");
   $stopSel.empty();
 
   _(routes[dirTag].stops).each(function(stoppy){
-    $stopSel.append('<option value="'+ stoppy +'">'+ stopsInfo[stoppy].title +'</option>');
+    $stopSel.append(stopOption({
+      value: stoppy,
+      title: stopsInfo[stoppy].title
+    }));
   });
 };
 
