@@ -1,14 +1,16 @@
-var getRoute = function(route) {
-  URLstops = 'http://webservices.nextbus.com/service/publicXMLFeed?command=routeConfig&a=sf-muni&r=' + route;
+// getNextbus({command: 'routeConfig', a:'sf-muni', r: route}, parseXMLstops, displayRoutes)
 
-  $.get(URLstops, function(xml){
-    stopsInfo = $(xml).find("body route > stop");
+var getNextbus = function(query, callback) {
+  URLstops = 'http://webservices.nextbus.com/service/publicXMLFeed';
+  var args = Array.prototype.slice.call(arguments, 2);
 
-    parseXMLstops(xml, displayRoutes);
+  $.get(URLstops, query, function(xml){
+      var cbArgs = [xml].concat(args);
+      callback.apply(this, cbArgs);
   });
 };
 
-var parseXMLstops = function(xml, cb) {
+var parseXMLstops = function(xml, callback) {
   // converting raw xml: http://webservices.nextbus.com/service/publicXMLFeed?command=routeConfig&a=sf-muni&r=J
   // into two objects, then passing them to a callback
 
@@ -38,7 +40,7 @@ var parseXMLstops = function(xml, cb) {
     };
   });
 
-  cb(stopsInfo, routes);
+  callback(stopsInfo, routes);
 };
 
 var routeOption = Handlebars.compile('<option value="{{key}}">{{title}}{{#if from}} from {{from}}{{/if}}</option>');
@@ -51,17 +53,13 @@ var displayRoutes = function(stopsInfo, routes) {
   var opt1 = '';
 
   _(routes).each(function(route, key){
-    var title = route.title;
 
-    //   title += ';
-    // $directionSel.append('<option value="'+ key +'">'+ route.title + opt1 +'</option>');
-
-    // Provide data
-    route.key = key;
-    if (route.direction === 'Inbound' && Object.keys(routes).length>2)
+    // if a route has more than two origins add a from to clarify
+    if (route.direction === 'Inbound' && Object.keys(routes).length>2) {
       route.from = stopsInfo[route.stops[0]].title;
+    }
 
-    // Let the template handle printing it out
+    route.key = key;
     $directionSel.append(routeOption(route));
   });
 
@@ -83,6 +81,23 @@ var displayStops = function(stopsInfo, routes, dirTag) {
     }));
   });
 };
+
+
+// TO REFACTOR
+// getNextbus({command: 'routeConfig', a:'sf-muni', r: route}, parseXMLstops, displayRoutes)
+// {command:'predictions',a:'sf-muni',s=}, parseXMLtimes);
+
+// var parseXMLtimes = function(xml, cb) {
+//   var predictions = $(xml).find('prediction').each(function(){
+//     times.push($(this).attr('seconds'));
+//   });
+
+//   cb(times);
+// };
+
+// var displayStopTimes = function(times, svgElement) {
+
+// };
 
 var getStopTimes = function(stopTag, routeTag, cb, svgElement){
   var routeQuery = '&r=' + routeTag;

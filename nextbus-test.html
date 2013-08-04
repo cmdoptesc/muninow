@@ -9,7 +9,7 @@
   </head>
   <body>
 
-    <form>
+    <form id="routeForm">
       <select id="routeSelector"></select>
 
       <select id="directionSelector"></select>
@@ -35,32 +35,10 @@
       $(function(){
         // NB.init(); // put goodies in here
 
-        $("#routeSelector").change(function(){
-          routeTag = $("#routeSelector").val();
-          getRoute(routeTag);
-        });
-
-        $("#directionSelector").change(function(){
-          displayStops(stopsInfo, routes, $("#directionSelector").val());
-        });
-
-        $("#stopSelector").change(function(){
-          stopId = $("#stopSelector").val();
-
-          if(charts[0]) {
-            updateChart(stopId, routeTag, charts[charts.length-1]);
-          }
-        });
-
-        $("#buttonRoute").click(function(){
-          stopId = $("#stopSelector").val();
-          charts.push(makeChart(stopId, routeTag));
-        })
-
       });
     </script>
-    <script src="nextbus-insert-routes.js"></script>
     <script src="nextbus-api-forms.js"></script>
     <script src="nextbus-d3.js"></script>
+    <script src="nextbus-insert-routes.js"></script>
   </body>
 </html>
