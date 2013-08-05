@@ -1,5 +1,9 @@
   // makeChart inserts a DIV and SVG within the DIV, returns a chart obj
   //  that keeps track of various items related to the chart
+
+  var w = 900,
+      h = 500;
+
 var makeChart = function(stop, route) {
   var chart = {};
 
@@ -36,22 +40,20 @@ var updateChart = function(stop, route, chart) {
   }, 12000);
 };
 
-var w = 900,
-    h = 500;
-
-var xPad = 10,
-    yPad = 10,
-    barPad = 1;
-
-var divisor = 5;
-
-var xScale = d3.scale.linear()
-                .domain([])
-                .range([xPad,w-xPad]);
-
 var render = function(dataset, vis) {
   var bar = vis.selectAll('rect');
   var minTxt = vis.selectAll("text");
+
+
+  var xPad = 10,
+      yPad = 10,
+      barPad = 1;
+
+  var divisor = 5;
+
+  var xScale = d3.scale.linear()
+                  .domain([])
+                  .range([xPad,w-xPad]);
 
   var skipFlag = false;
   var tr_time = 10500;

@@ -12,10 +12,10 @@ $("#directionSelector").change(function(){
 });
 
 $("#stopSelector").change(function(){
-  stopId = $("#stopSelector").val();
+  displayDestinations(stopsInfo, routes, $("#directionSelector").val(), $("#stopSelector").val());
 
   if(charts[0]) {
-    updateChart(stopId, routeTag, charts[charts.length-1]);
+    updateChart(stopTag, routeTag, charts[charts.length-1]);
   }
 });
 

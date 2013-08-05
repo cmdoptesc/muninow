@@ -41,7 +41,7 @@
     return callback ? callback(stopsInfo, routes) : {stopsInfo:stopsInfo, routes:routes};
   };
 
-  var routeOption = Handlebars.compile('<option value="{{key}}">{{title}}{{#if from}} from {{from}}{{/if}}</option>');
+  var routeOption = Handlebars.compile('<option value="{{value}}">{{title}}{{#if from}} from {{from}}{{/if}}</option>');
   var stopOption = Handlebars.compile('<option value="{{value}}">{{title}}</option>');
 
   var displayRoutes = function(stopsInfo, routes) {
@@ -58,7 +58,7 @@
         route.from = stopsInfo[route.stops[0]].title;
       }
 
-      route.key = key;
+      route.value = key;
       $directionSel.append(routeOption(route));
     });
 
@@ -70,10 +70,10 @@
     var $stopSel = $("#stopSelector");
     $stopSel.empty();
 
-    _(routes[dirTag].stops).each(function(stoppy){
+    _(routes[dirTag].stops).each(function(stopTag) {
       $stopSel.append(stopOption({
-        value: stoppy,
-        title: stopsInfo[stoppy].title
+        value: stopTag,
+        title: stopsInfo[stopTag].title
       }));
     });
   };
@@ -89,13 +89,20 @@
 
 // }();
 
-// var displayDests = function(stopsInfo, routes, dirTag, selectedStop) {
-//   var $stopSel = $("#stopSelector");
-//   $stopSel.empty();
+var displayDestinations = function(stopsInfo, routes, dirTag, selectedStop) {
+  var $destSel = $("#destSelector");
+  $destSel.empty();
 
-//   selectedStop = selectedStop || routes[dirTag].stops[0];
+  var stops = routes[dirTag].stops;
+  var flag = false;
 
-//   _(routes[dirTag].stops).each(function(stoppy){
-//     $stopSel.append('<option value="'+ stoppy +'">'+ stopsInfo[stoppy].title +'</option>');
-//   });
-// };
+  _(routes[dirTag].stops).each(function(stopTag) {
+    if(flag) {
+      $destSel.append(stopOption({
+        value: stopTag,
+        title: stopsInfo[stopTag].title
+      }));
+    }
+    if(stopTag===selectedStop) { flag = true; }
+  });
+};
