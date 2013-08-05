@@ -13,25 +13,28 @@ var makeChart = function(stop, route) {
               .attr('height', h)
               .style('border', '1px solid black');
 
-  getStopTimes(stop, route, render, chart.vis);
-  chart.timer = setInterval(function(){
-    getStopTimes(stop,route, render, chart.vis);
-  }, 12000);
+  updateChart(stop, route, chart);
 
   return chart;
 };
 
 var updateChart = function(stop, route, chart) {
-  window.clearInterval(chart.timer);
+  if(chart.timer) { window.clearInterval(chart.timer); }
   $(chart.vis[0]).empty();
   $(chart.div).children().first().text(routesList[route]);
 
-  getStopTimes(stop, route, render, chart.vis);
+  var query = {command:'predictions',a:'sf-muni',s:stopId,r:routeTag};
+  var parseAndRender = function(xml) {
+    data = parseXMLtimes(xml);
+    render(data, chart.vis);
+  };
+
+  getNextbus(query, parseAndRender);
+
   chart.timer = setInterval(function(){
-    getStopTimes(stop,route, render, chart.vis);
+    getNextbus(query, parseAndRender);
   }, 12000);
 };
-
 
 var w = 900,
     h = 500;
@@ -71,7 +74,7 @@ var render = function(dataset, vis) {
 
   var barProperties = function(obj){
     obj.attr("y", function(d, i) {
-          return i * (h / (dataset.length)) + yPad;
+          return i * ((h - 2*yPad) / (dataset.length)) + yPad;
         })
         .attr("width", function(d) {
           return Math.floor(d/divisor);
@@ -96,7 +99,7 @@ var render = function(dataset, vis) {
           return Math.floor(d/divisor) - fromEdge;
         })
         .attr("y", function(d, i) {
-          return i * (h / (dataset.length)) + yPad + 10;
+          return i * ((h - 2*yPad) / (dataset.length) + barPad) + yPad + 10;
         })
         .attr("font-family", "sans-serif")
         .attr("font-size", "11px")

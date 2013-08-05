@@ -2,7 +2,9 @@
 
 $("#routeSelector").change(function(){
   routeTag = $("#routeSelector").val();
-  getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, parseXMLstops, displayRoutes);
+  getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
+    var data = parseXMLstops(xml, displayRoutes);
+  });
 });
 
 $("#directionSelector").change(function(){
