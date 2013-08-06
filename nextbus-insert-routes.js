@@ -21,6 +21,15 @@ $("#stopSelector").change(function(){
   }
 });
 
+$("#destSelector").change(function(){
+  var routeTag = $("#routeSelector").val();
+  var stopTag = $("#stopSelector").val();
+
+  if(charts[0]) {
+    updateChart(stopTag, routeTag, charts[charts.length-1]);
+  }
+});
+
 $("#buttonRoute").click(function(){
   var routeTag = $("#routeSelector").val();
   var stopTag = $("#stopSelector").val();

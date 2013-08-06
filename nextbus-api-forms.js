@@ -107,7 +107,12 @@
   var parseXMLtimes = function(xml, callback) {
     var times = [];
     var predictions = $(xml).find('prediction').each(function(){
-      times.push($(this).attr('seconds'));
+      $pre = $(this);
+      var prediction = {
+        seconds: $pre.attr('seconds'),
+        vehicle: $pre.attr('vehicle')
+      };
+      times.push(prediction);
     });
 
     return callback ? callback(times) : times;
