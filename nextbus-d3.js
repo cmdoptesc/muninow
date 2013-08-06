@@ -17,6 +17,15 @@ var makeChart = function(stop, route) {
               .attr('height', h)
               .style('border', '1px solid black');
 
+  var $svg = $(chart.vis[0]);
+
+  $svg.click(function(){
+    var state1 = 'border: 1px solid black';
+    var state2 = 'border: 2px solid red';
+
+    $svg.attr("style", ($svg.attr("style")===state1) ? state2 : state1 );
+  });
+
   updateChart(stop, route, chart);
 
   return chart;
@@ -27,7 +36,7 @@ var updateChart = function(stop, route, chart) {
   $(chart.vis[0]).empty();
   $(chart.div).children().first().text(routesList[route]);
 
-  var query = {command:'predictions',a:'sf-muni',s:stopId,r:routeTag};
+  var query = {command:'predictions', a:'sf-muni', s:stop, r:route};
   var parseAndRender = function(xml) {
     data = parseXMLtimes(xml);
     render(data, chart.vis);

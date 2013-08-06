@@ -44,7 +44,7 @@
   var routeOption = Handlebars.compile('<option value="{{value}}">{{title}}{{#if from}} from {{from}}{{/if}}</option>');
   var stopOption = Handlebars.compile('<option value="{{value}}">{{title}}</option>');
 
-  var displayRoutes = function(stopsInfo, routes) {
+  var displayDirections = function(stopsInfo, routes) {
     var $directionSel = $("#directionSelector");
     $directionSel.empty();
     $("#stopSelector").empty();
@@ -62,7 +62,7 @@
       $directionSel.append(routeOption(route));
     });
 
-    var dirTag = $("#directionSelector").val();
+    var dirTag = $directionSel.val();
     displayStops(stopsInfo, routes, dirTag);
   };
 
@@ -76,6 +76,9 @@
         title: stopsInfo[stopTag].title
       }));
     });
+
+    var stopTag = $stopSel.val();
+    displayDestinations(stopsInfo, routes, dirTag, stopTag);
   };
 
   var parseXMLtimes = function(xml, callback) {

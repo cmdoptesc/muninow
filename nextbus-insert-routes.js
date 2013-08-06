@@ -1,9 +1,9 @@
 
 
 $("#routeSelector").change(function(){
-  routeTag = $("#routeSelector").val();
+  var routeTag = $("#routeSelector").val();
   getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
-    var data = parseXMLstops(xml, displayRoutes);
+    var data = parseXMLstops(xml, displayDirections);
   });
 });
 
@@ -12,7 +12,9 @@ $("#directionSelector").change(function(){
 });
 
 $("#stopSelector").change(function(){
-  displayDestinations(stopsInfo, routes, $("#directionSelector").val(), $("#stopSelector").val());
+  var routeTag = $("#routeSelector").val();
+  var stopTag = $("#stopSelector").val();
+  displayDestinations(stopsInfo, routes, $("#directionSelector").val(), stopTag);
 
   if(charts[0]) {
     updateChart(stopTag, routeTag, charts[charts.length-1]);
@@ -20,8 +22,9 @@ $("#stopSelector").change(function(){
 });
 
 $("#buttonRoute").click(function(){
-  stopId = $("#stopSelector").val();
-  charts.push(makeChart(stopId, routeTag));
+  var routeTag = $("#routeSelector").val();
+  var stopTag = $("#stopSelector").val();
+  charts.push(makeChart(stopTag, routeTag));
 });
 
 var routesInsert = [
