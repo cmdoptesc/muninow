@@ -44,9 +44,11 @@
   var routeOption = Handlebars.compile('<option value="{{value}}">{{title}}{{#if from}} from {{from}}{{/if}}</option>');
   var stopOption = Handlebars.compile('<option value="{{value}}">{{title}}</option>');
 
-  var displayDirections = function(stopsInfo, routes) {
-    var $directionSel = $("#directionSelector");
-    $directionSel.empty();
+
+    // dirTag is optional. if provided, will set drop-down to the specified direction
+  var displayDirections = function(stopsInfo, routes, dirTag) {
+    var $dirSel = $("#directionSelector");
+    $dirSel.empty();
     $("#stopSelector").empty();
 
     var opt1 = '';
@@ -59,26 +61,47 @@
       }
 
       route.value = key;
-      $directionSel.append(routeOption(route));
+      $dirSel.append(routeOption(route));
     });
 
-    var dirTag = $directionSel.val();
+    dirTag ? $dirSel.val(dirTag) : dirTag = $dirSel.val();
     displayStops(stopsInfo, routes, dirTag);
   };
 
-  var displayStops = function(stopsInfo, routes, dirTag) {
+    // stopTag is optional. if provided will set drop-down to specified stop
+  var displayStops = function(stopsInfo, routes, dirTag, stopTag) {
     var $stopSel = $("#stopSelector");
     $stopSel.empty();
 
-    _(routes[dirTag].stops).each(function(stopTag) {
+    _(routes[dirTag].stops).each(function(stopNum) {
       $stopSel.append(stopOption({
-        value: stopTag,
-        title: stopsInfo[stopTag].title
+        value: stopNum,
+        title: stopsInfo[stopNum].title
       }));
     });
 
-    var stopTag = $stopSel.val();
+    stopTag ? $stopSel.val(stopTag) : stopTag = $stopSel.val();
     displayDestinations(stopsInfo, routes, dirTag, stopTag);
+  };
+
+// }();
+
+  var displayDestinations = function(stopsInfo, routes, dirTag, selectedStop) {
+    var $destSel = $("#destSelector");
+    $destSel.empty();
+
+    var stops = routes[dirTag].stops;
+    var flag = false;
+
+    _(routes[dirTag].stops).each(function(stopTag) {
+      if(flag) {
+        $destSel.append(stopOption({
+          value: stopTag,
+          title: stopsInfo[stopTag].title
+        }));
+      }
+      if(stopTag===selectedStop) { flag = true; }
+    });
   };
 
   var parseXMLtimes = function(xml, callback) {
@@ -89,23 +112,3 @@
 
     return callback ? callback(times) : times;
   };
-
-// }();
-
-var displayDestinations = function(stopsInfo, routes, dirTag, selectedStop) {
-  var $destSel = $("#destSelector");
-  $destSel.empty();
-
-  var stops = routes[dirTag].stops;
-  var flag = false;
-
-  _(routes[dirTag].stops).each(function(stopTag) {
-    if(flag) {
-      $destSel.append(stopOption({
-        value: stopTag,
-        title: stopsInfo[stopTag].title
-      }));
-    }
-    if(stopTag===selectedStop) { flag = true; }
-  });
-};
