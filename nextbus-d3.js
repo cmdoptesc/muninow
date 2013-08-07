@@ -104,10 +104,13 @@ var updateChart = function(stop, route, chart) {
 
 var render = function(dataset, vis) {
   console.log("Incoming buses: ", dataset);
+  console.log("Times:");
+  _(dataset).each(function(time){
+    console.log(time.seconds);
+  });
 
   var g = vis.selectAll("g")
-      .data(dataset)
-      .enter().append("g");
+      .data(dataset);
 
   var skipFlag = false;
   var tr_time = 10500;
@@ -143,10 +146,20 @@ var render = function(dataset, vis) {
       })
       .startAngle(0 * (pi/180))
       .endAngle(function(d) {
-        return Math.ceil(d.seconds/60)*6 * (pi/180);
+        //return Math.ceil(d.seconds/60)*6 * (pi/180);
+        return parseFloat((d.seconds/30)*6 * (pi/180));
       });
 
-  g.append("path")
+  g.select("path")
+      .transition()
+      .duration(1000)
+      .attr("fill", function(d){
+        var g = Math.floor((1 - d.seconds/4000)*255);
+        return "rgb(0, "+ g +", 0)";
+      })
+      .attr("d", arc);
+
+  g.enter().append("svg:g").append("svg:path")
       .attr("d", arc)
       .attr("transform", 'translate('+ w/2 +','+ h/2 +')')
       .attr("fill", function(d){
@@ -165,9 +178,4 @@ var render = function(dataset, vis) {
         });
         console.log(i, ': ', d.seconds);
       });
-
-      // can't get it to animate
-  g.select("path")
-    .attr("d", arc);
-
 };
