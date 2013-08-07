@@ -1,7 +1,7 @@
   // makeChart inserts a DIV and SVG within the DIV, returns a chart obj
   //  that keeps track of various items related to the chart
 
-  var w = 900,
+  var w = 500,
       h = 500;
 
 var makeChart = function(stop, route) {
@@ -137,6 +137,8 @@ var render = function(dataset, vis) {
   var aWidth = 15;
   var aPad = 1;
 
+  var selColor = 'rgb(255,0,0)';
+
   var arc = d3.svg.arc()
       .innerRadius(function(d, i) {
         return aMin + i*(aWidth) + aPad;
@@ -150,12 +152,21 @@ var render = function(dataset, vis) {
         return parseFloat((d.seconds/30)*6 * (pi/180));
       });
 
+  var greenGradient = function(d) {
+    var g = Math.floor((1 - d.seconds/4000)*255);
+    return "rgb(0, "+ g +", 0)";
+  };
+
   g.select("path")
       .transition()
       .duration(1000)
       .attr("fill", function(d){
-        var g = Math.floor((1 - d.seconds/4000)*255);
-        return "rgb(0, "+ g +", 0)";
+        var d3arc = d3.select(this);
+        if(d3arc.attr("fill")===selColor) {
+          return selColor;
+        } else {
+          return greenGradient(d);
+        }
       })
       .attr("d", arc);
 
@@ -163,19 +174,24 @@ var render = function(dataset, vis) {
       .attr("d", arc)
       .attr("transform", 'translate('+ w/2 +','+ h/2 +')')
       .attr("fill", function(d){
-        var g = Math.floor((1 - d.seconds/4000)*255);
-        return "rgb(0, "+ g +", 0)";
+        return greenGradient(d);
       })
       .on("click", function(d, i){
-        d3.select(this).attr("fill", function(d){
-          var thisArc = d3.select(this);
-          if(thisArc.attr("fill")==='red'){
-            var g = Math.floor((1 - d.seconds/4000)*255);
-            return "rgb(0, "+ g +", 0)";
-          } else {
-            return 'red';
-          }
-        });
+        var d3selected = d3.select(this);
+
+        if(d3selected.attr("fill")===selColor) {
+          d3selected.attr("fill", greenGradient(d3selected.datum()));
+        } else {
+          _(d3.selectAll("path")[0]).each(function(arcPath){
+            var d3arc = d3.select(arcPath);
+            var pathDatum = d3arc.datum();
+            d3arc.attr("fill", greenGradient(pathDatum));
+          });
+
+           d3selected.attr("fill", selColor);
+
+        }
+
         console.log(i, ': ', d.seconds);
       });
 };
