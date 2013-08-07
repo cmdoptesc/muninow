@@ -161,16 +161,7 @@ var render = function(dataset, vis) {
       .transition()
       .duration(1000)
       .attr("fill", function(d){
-<<<<<<< HEAD
         return (d3.select(this).attr("fill")===selColor) ? selColor : greenGradient(d);
-=======
-        var d3arc = d3.select(this);
-        if(d3arc.attr("fill")===selColor) {
-          return selColor;
-        } else {
-          return greenGradient(d);
-        }
->>>>>>> d3ba02430debe31a253ae1409966b346ed248f95
       })
       .attr("d", arc);
 
@@ -188,18 +179,9 @@ var render = function(dataset, vis) {
         } else {
           _(d3.selectAll("path")[0]).each(function(arcPath){
             var d3arc = d3.select(arcPath);
-<<<<<<< HEAD
             d3arc.attr("fill", greenGradient(d3arc.datum()));
           });
           d3selected.attr("fill", selColor);
-=======
-            var pathDatum = d3arc.datum();
-            d3arc.attr("fill", greenGradient(pathDatum));
-          });
-
-           d3selected.attr("fill", selColor);
-
->>>>>>> d3ba02430debe31a253ae1409966b346ed248f95
         }
 
         console.log(i, ': ', d.seconds);
