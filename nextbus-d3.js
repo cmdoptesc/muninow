@@ -83,14 +83,12 @@ var render = function(dataset, vis) {
     console.log(time.seconds);
   });
 
-  var g = vis.selectAll("g");
+  var g = vis.selectAll("g.arcGroup");
 
   var tr_time = 4500;
 
-  var pathChk = d3.select("path");
-
   if(g[0] && g[0][0]) {
-    var pastBus = d3.select(g[0][0]).select("path").datum();
+    var pastBus = d3.select(g[0][0]).select("path.arcPath").datum();
     if( (pastBus.seconds<45) && (dataset[0].vehicle != pastBus.vehicle) ) {
       tr_time = 1500;
       g[0][0].remove();
@@ -99,6 +97,15 @@ var render = function(dataset, vis) {
   }
 
   g = g.data(dataset);
+
+  var d3centerText = vis.selectAll("#timeDisplay");
+  var centerSec = [dataset[0]];
+
+  var updateCenter = function(newData) {
+    d3centerText.data(newData).text(function(d){
+      return toMin(d.seconds);
+    });
+  };
 
   var pi = Math.PI;
   var aMin = 75;
@@ -116,7 +123,7 @@ var render = function(dataset, vis) {
       })
       .startAngle(0 * (pi/180))
       .endAngle(function(d) {
-        //return Math.ceil(d.seconds/60)*6 * (pi/180);
+        //return parseFloat(d.seconds/60)*6 * (pi/180);
         return parseFloat((d.seconds/30)*6 * (pi/180));
       });
 
@@ -125,15 +132,27 @@ var render = function(dataset, vis) {
     return "rgb(0, "+ g +", 0)";
   };
 
-  g.select("path")
+  var toMin = function(sec) {
+    return sec/60;
+  };
+
+  g.select("path.arcPath")
       .transition()
       .duration(tr_time)
       .attr("fill", function(d){
-        return (d3.select(this).attr("fill")===selColor) ? selColor : greenGradient(d);
+        if(d3.select(this).attr("fill")===selColor) {
+          centerSec = [d3.select(this).datum()];
+          updateCenter(centerSec);
+          return selColor;
+        } else {
+          return greenGradient(d);
+        }
       })
       .attr("d", arc);
 
-  g.enter().append("svg:g").append("svg:path")
+  g.enter().append("svg:g").attr("class", 'arcGroup')
+      .append("svg:path")
+      .attr("class", 'arcPath')
       .attr("d", arc)
       .attr("transform", 'translate('+ w/2 +','+ h/2 +')')
       .attr("fill", function(d){
@@ -144,14 +163,29 @@ var render = function(dataset, vis) {
 
         if(d3selected.attr("fill")===selColor) {
           d3selected.attr("fill", greenGradient(d3selected.datum()));
+          console.log('first element', dataset[0]);
+          updateCenter([dataset[0]]);
         } else {
           _(d3.selectAll("path")[0]).each(function(arcPath){
             var d3arc = d3.select(arcPath);
             d3arc.attr("fill", greenGradient(d3arc.datum()));
           });
           d3selected.attr("fill", selColor);
+          updateCenter([d3selected.datum()]);
         }
 
         console.log(d.routeTag +': '+ d.seconds);
+      });
+
+  updateCenter(centerSec);
+
+  d3centerText = d3centerText.data(centerSec);
+
+  d3centerText.enter().append("text")
+      .attr("id", "timeDisplay")
+      .attr("x", w/2)
+      .attr("y", h/2)
+      .text(function(d){
+        return toMin(d.seconds);
       });
 };
