@@ -54,8 +54,6 @@ var updateChart = function(stop, route, chart) {
   var query0 = {command:'predictions', a:'sf-muni', s:stop, r:route};
   var query1 = {command:'predictions', a:'sf-muni', s:dest, r:route};
 
-
-
   getNextbus(query0, function(xml){
     var rS = '' + route + stop;
     var times = getFastest(rS, parseXMLtimes(xml));
@@ -78,28 +76,26 @@ var render = function(dataset, vis) {
     console.log(time.seconds);
   });
 
-  var g = vis.selectAll("g")
-      .data(dataset);
+  var g = vis.selectAll("g");
 
   var skipFlag = false;
-  var tr_time = 10500;
+  var tr_time = 1500;
 
-    // checking if the bus rolls off the stop
-    //    condition: if the last reported time was <30s and the new time is 90s greater
-/*  if(bar[0] && bar[0][0]) {
-    var pWidth = parseInt( d3.select(bar[0][0]).attr("width") )*divisor;
-    if( (pWidth < 30) && ( parseInt(dataset[0][0].seconds) - pWidth ) > 90 ) {
+  var pathChk = d3.select("path");
+
+  if(g[0] && g[0][0]) {
+    var prev = parseInt(d3.select(g[0][0]).select("path").datum().seconds);
+    if( (prev<30) && (parseInt(dataset[0].seconds)-prev)>90 ) {
       skipFlag = true;
-      tr_time = 5000;
-      bar[0][0].remove();
-      minTxt[0][0].remove();
-      bar[0].splice(0,1);
-      minTxt[0].splice(0,1);
+      tr_time = 1000;
+      g[0][0].remove();
+      g[0].splice(0,1);
     } else {
       skipFlag = false;
     }
   }
-*/
+
+  g = g.data(dataset);
 
   var pi = Math.PI;
   var aMin = 75;
@@ -128,7 +124,7 @@ var render = function(dataset, vis) {
 
   g.select("path")
       .transition()
-      .duration(1000)
+      .duration(tr_time)
       .attr("fill", function(d){
         return (d3.select(this).attr("fill")===selColor) ? selColor : greenGradient(d);
       })
