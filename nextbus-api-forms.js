@@ -1,9 +1,21 @@
 // var nb = function() {
 
   var getNextbus = function(query, callback) {
-    URLstops = 'http://webservices.nextbus.com/service/publicXMLFeed';
+    var apiUrl = 'http://webservices.nextbus.com/service/publicXMLFeed';
 
-    $.get(URLstops, query, function(xml){
+    $.get(apiUrl, query, function(xml){
+        callback.call(this, xml);
+    });
+  };
+
+  var getMultiStops = function(stopsArray, callback) {
+    var stopsQuery = 'http://webservices.nextbus.com/service/publicXMLFeed?command=predictionsForMultiStops&a=sf-muni';
+
+    _(stopsArray).each(function(stop) {
+      stopsQuery += '&stops='+ stop[0] +'|'+ stop[1];
+    });
+
+    $.get(stopsQuery, function(xml){
         callback.call(this, xml);
     });
   };
@@ -107,14 +119,36 @@
   var parseXMLtimes = function(xml, callback) {
     var times = [];
     var rT = $(xml).find('predictions').attr('routeTag');
-    var predictions = $(xml).find('prediction').each(function(){
+    $(xml).find('prediction').each(function(){
       $pre = $(this);
       var prediction = {
         seconds: $pre.attr('seconds'),
         vehicle: $pre.attr('vehicle'),
-        route: rT
+        routeTag: rT
       };
       times.push(prediction);
+    });
+
+    return callback ? callback(times) : times;
+  };
+
+var parseXMLmulti = function(xml, callback) {
+    var times = [];
+    var predictions = $(xml).find('predictions').each(function(){
+      var $prs = $(this);
+      var routeTag = $prs.attr('routeTag');
+      var stopTag = $prs.attr('stopTag');
+
+      $prs.find('predictions > direction > prediction').each(function(){
+        var $pr = $(this);
+        var prediction = {
+          routeTag: routeTag,
+          stopTag: stopTag,
+          seconds: $pr.attr('seconds'),
+          vehicle: $pr.attr('vehicle')
+        };
+        times.push(prediction);
+      });
     });
 
     return callback ? callback(times) : times;

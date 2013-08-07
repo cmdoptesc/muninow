@@ -22,51 +22,56 @@ var makeChart = function(stop, route) {
   return chart;
 };
 
+queryAccuMaker = function() {
+  var memo = {};
 
+  return function(stop, route) {
+    if( stop && route ) {
+      var rS = '' + route + stop;
+      memo[rS] = [route, stop];
+    }
 
-getFastestMaker = function() {
-    var memo = {};
+    var query = [];
+    for(var key in memo) {
+      query.push(memo[key]);
+    }
 
-    return function(rS, parsed) {
-      memo[rS] = parsed;
-      var times = [];
-      for(var key in memo) {
-        times = times.concat(memo[key]);
-      }
-
-      var sorted = _.sortBy(times, function(time){
-        return parseInt(time.seconds);
-      });
-
-      return (sorted.length>6) ? sorted.slice(0,6) : sorted;
-    };
+    return query;
   };
+};
 
-var getFastest = getFastestMaker();
+var queriesToStop = queryAccuMaker();
+var queriesToDest = queryAccuMaker();
 
 var updateChart = function(stop, route, chart) {
+  var getSix = function(times) {
+    var sorted = _.sortBy(times, function(time){
+      return parseInt(time.seconds, 10);
+    });
+
+    return (sorted.length>6) ? sorted.slice(0,6) : sorted;
+  };
+
   if(chart.timer) { window.clearInterval(chart.timer); }
   $(chart.vis[0]).empty();
   $(chart.div).children().first().text(routesList[route]);
 
   var dest = $("#destSelector").val();
 
-  var query0 = {command:'predictions', a:'sf-muni', s:stop, r:route};
-  var query1 = {command:'predictions', a:'sf-muni', s:dest, r:route};
+  var queryStop = queriesToStop(stop, route);
+  var queryDest = queriesToDest(dest, route);
 
-  getNextbus(query0, function(xml){
-    var rS = '' + route + stop;
-    var times = getFastest(rS, parseXMLtimes(xml));
+  getMultiStops(queryStop, function(xml){
+    var times = getSix(parseXMLmulti(xml));
     render(times, chart.vis);
   });
 
-  chart.time = setInterval(function(){
-    getNextbus(query0, function(xml){
-      var rS = '' + route + stop;
-      var times = getFastest(rS, parseXMLtimes(xml));
+  chart.timer = setInterval(function(){
+    getMultiStops(queryStop, function(xml){
+      var times = getSix(parseXMLmulti(xml));
       render(times, chart.vis);
     });
-  }, 12000);
+  }, 14500);
 };
 
 var render = function(dataset, vis) {
@@ -78,20 +83,16 @@ var render = function(dataset, vis) {
 
   var g = vis.selectAll("g");
 
-  var skipFlag = false;
-  var tr_time = 1500;
+  var tr_time = 4500;
 
   var pathChk = d3.select("path");
 
   if(g[0] && g[0][0]) {
-    var prev = parseInt(d3.select(g[0][0]).select("path").datum().seconds);
-    if( (prev<30) && (parseInt(dataset[0].seconds)-prev)>90 ) {
-      skipFlag = true;
-      tr_time = 1000;
+    var pastBus = d3.select(g[0][0]).select("path").datum();
+    if( (pastBus.seconds<45) && (dataset[0].vehicle != pastBus.vehicle) ) {
+      tr_time = 1500;
       g[0][0].remove();
       g[0].splice(0,1);
-    } else {
-      skipFlag = false;
     }
   }
 
@@ -149,6 +150,6 @@ var render = function(dataset, vis) {
           d3selected.attr("fill", selColor);
         }
 
-        console.log(d.route +': '+ d.seconds);
+        console.log(d.routeTag +': '+ d.seconds);
       });
 };
