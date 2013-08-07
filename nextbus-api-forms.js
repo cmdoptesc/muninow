@@ -106,11 +106,13 @@
 
   var parseXMLtimes = function(xml, callback) {
     var times = [];
+    var rT = $(xml).find('predictions').attr('routeTag');
     var predictions = $(xml).find('prediction').each(function(){
       $pre = $(this);
       var prediction = {
         seconds: $pre.attr('seconds'),
-        vehicle: $pre.attr('vehicle')
+        vehicle: $pre.attr('vehicle'),
+        route: rT
       };
       times.push(prediction);
     });

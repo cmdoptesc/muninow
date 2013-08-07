@@ -22,6 +22,28 @@ var makeChart = function(stop, route) {
   return chart;
 };
 
+
+
+getFastestMaker = function() {
+    var memo = {};
+
+    return function(rS, parsed) {
+      memo[rS] = parsed;
+      var times = [];
+      for(var key in memo) {
+        times = times.concat(memo[key]);
+      }
+
+      var sorted = _.sortBy(times, function(time){
+        return parseInt(time.seconds);
+      });
+
+      return (sorted.length>6) ? sorted.slice(0,6) : sorted;
+    };
+  };
+
+var getFastest = getFastestMaker();
+
 var updateChart = function(stop, route, chart) {
   if(chart.timer) { window.clearInterval(chart.timer); }
   $(chart.vis[0]).empty();
@@ -32,72 +54,19 @@ var updateChart = function(stop, route, chart) {
   var query0 = {command:'predictions', a:'sf-muni', s:stop, r:route};
   var query1 = {command:'predictions', a:'sf-muni', s:dest, r:route};
 
-  // var parseAndRender = function(xml) {
-  //   var stop0 = parseXMLtimes(xml);
-  //   render(stop0, chart.vis);
-  // };
 
-  var syncPredictions = function(pre0, pre1) {
-    var times = [],
-        time0 = [],
-        time1 = [];
-    var k = 0;
-
-    for(var i=0; i<pre0.length; i++) {
-      var prediction0 = { x: i },
-          prediction1 = { x: i };
-
-      prediction0.seconds = pre0[i].seconds;
-      prediction0.vehicle = pre0[i].vehicle;
-
-      for(var j=k; j<pre1.length; j++) {
-        if(pre1[j].vehicle === prediction0.vehicle) {
-          prediction1.seconds = pre1[j].seconds - prediction0.seconds;
-          prediction1.vehicle = pre1[j].vehicle;
-          prediction1.offset = prediction0.seconds;
-          k = j;
-        }
-      }
-
-      time0.push(prediction0);
-      time1.push(prediction1);
-    }
-
-    times.push(time0);
-    times.push(time1);
-
-    return times;
-  };
-
-  // getNextbus(query0, function(xml) {
-  //   var stop0 = parseXMLtimes(xml);
-  //   getNextbus(query1, function(xml2){
-  //     var stop1 = parseXMLtimes(xml2);
-  //     var times = syncPredictions(stop0, stop1);
-
-  //     render(times, chart.vis);
-  //   });
-  // });
-
-  // chart.timer = setInterval(function(){
-  //   getNextbus(query0, function(xml) {
-  //     var stop0 = parseXMLtimes(xml);
-  //     getNextbus(query1, function(xml2){
-  //       var stop1 = parseXMLtimes(xml2);
-  //       var times = syncPredictions(stop0, stop1);
-
-  //       render(times, chart.vis);
-  //     });
-  //   });
-  // }, 12000);
 
   getNextbus(query0, function(xml){
-    render(parseXMLtimes(xml), chart.vis);
+    var rS = '' + route + stop;
+    var times = getFastest(rS, parseXMLtimes(xml));
+    render(times, chart.vis);
   });
 
   chart.time = setInterval(function(){
     getNextbus(query0, function(xml){
-      render(parseXMLtimes(xml), chart.vis);
+      var rS = '' + route + stop;
+      var times = getFastest(rS, parseXMLtimes(xml));
+      render(times, chart.vis);
     });
   }, 12000);
 };
@@ -184,6 +153,6 @@ var render = function(dataset, vis) {
           d3selected.attr("fill", selColor);
         }
 
-        console.log(i, ': ', d.seconds);
+        console.log(d.route +': '+ d.seconds);
       });
 };
