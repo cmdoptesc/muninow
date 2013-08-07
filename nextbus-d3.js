@@ -25,10 +25,12 @@ var makeChart = function(stop, route) {
 queryAccuMaker = function() {
   var memo = {};
 
-  return function(stop, route) {
+  return function(stop, route, del) {
     if( stop && route ) {
       var rS = '' + route + stop;
-      memo[rS] = [route, stop];
+
+      if(del==='true') { delete memo[rS]; }
+      else { memo[rS] = [route, stop]; }
     }
 
     var query = [];
@@ -44,11 +46,11 @@ var queriesToStop = queryAccuMaker();
 var queriesToDest = queryAccuMaker();
 
 var updateChart = function(stop, route, chart) {
+
   var getSix = function(times) {
     var sorted = _.sortBy(times, function(time){
       return parseInt(time.seconds, 10);
     });
-
     return (sorted.length>6) ? sorted.slice(0,6) : sorted;
   };
 
