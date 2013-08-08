@@ -25,12 +25,16 @@
       <h1>myMuni</h1>
 
       <form id="routeForm" class="form-horizontal">
-          <select id="routeSelector" class="form-control input-sm"></select><br />
+          <select id="routeSelector" class="form-control input-sm">
+            <option value="null">Please select your Muni line..</option>
+          </select><br />
           <select id="directionSelector" class="form-control input-sm"></select><br />
           <label>From:</label><select id="stopSelector" class="form-control input-sm"></select><br />
           <label>To:</label><select id="destSelector" class="form-control input-sm"></select>
         <p><button type="button" class="btn btn-info btn-mini" id="buttonRoute">Add Route</button></p>
       </form>
+
+      <div id="additionalInfo"></div>
 
       <div id="chartArea"></div>
     </div>

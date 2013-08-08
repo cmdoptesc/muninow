@@ -36,6 +36,8 @@ var makeChart = function(stop, route) {
                 .style('border', '1px solid rgba(153,153,153, 0.5)');
   (chart.vis).append("svg:g").attr("class", 'centerGroup');
 
+  $("#additionalInfo").text("Each arc represents the number of minutes for a bus to each your stop.");
+
   updateChart(stop, route, chart);
 
   return chart;
@@ -159,9 +161,6 @@ var render = function(dataset, vis) {
       .attr("fill", function(d){
         return colorScale(d.seconds);
       })
-      .transition()
-      .ease("elastic")
-      .duration(750)
       .attr("d", arc);
 
     // moved event handler from enter() as there were closure issues with referencing old dataset[0]
