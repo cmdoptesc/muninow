@@ -123,8 +123,7 @@ var render = function(dataset, vis) {
       })
       .startAngle(0 * (pi/180))
       .endAngle(function(d) {
-        //return parseFloat(d.seconds/60)*6 * (pi/180);
-        return parseFloat((d.seconds/30)*6 * (pi/180));
+        return parseFloat((d.seconds/60)*6 * (pi/180));
       });
 
   var greenGradient = function(d) {
@@ -132,8 +131,10 @@ var render = function(dataset, vis) {
     return "rgb(0, "+ g +", 0)";
   };
 
+    // love this.
   var toMin = function(sec) {
-    return sec/60;
+    var fuzzy = 5*( 5 - sec/60 );
+    return ( sec%60 > fuzzy ) ? Math.ceil(sec/60) : Math.floor(sec/60);
   };
 
   g.select("path.arcPath")
