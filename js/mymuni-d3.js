@@ -4,10 +4,8 @@ var queryStorageMaker = function() {
 
   return function(stop, route, del) {
     if( stop && route ) {
-      var rS = '' + route + stop;
-
-      if(del==='true') { delete memo[rS]; }
-      else { memo[rS] = [route, stop]; }
+      if(del==='true') { delete memo[route]; }
+      else { memo[route] = [route, stop]; }
     }
 
     var query = [];
@@ -36,7 +34,7 @@ var makeChart = function(stop, route) {
                 .style('border', '1px solid rgba(153,153,153, 0.5)');
   (chart.vis).append("svg:g").attr("class", 'centerGroup');
 
-  $("#additionalInfo").text("Each arc represents the number of minutes for a bus to each your stop.");
+  $("#additionalInfo").text("Each arc represents the number of minutes for a bus/train to each your specified stop. You can track additional lines by re-using the form above.");
 
   updateChart(stop, route, chart);
 
