@@ -156,8 +156,8 @@ var render = function(dataset, vis) {
   gArc.enter().append("svg:g").attr("class", 'arcGroup')
       .append("svg:path")
       .attr("class", 'arcPath')
-      .attr("fill", function(d){
-        return colorScale(d.seconds);
+      .attr("fill", function(d, i){
+        return (i===0) ? selectionColor: colorScale(d.seconds);
       })
       .attr("d", arc);
 
@@ -166,20 +166,17 @@ var render = function(dataset, vis) {
     .on("click", function(d, i){
         var d3selected = d3.select(this);
 
-        if(d3selected.attr("fill")===selectionColor) {
-          d3selected.attr("fill", colorScale(d3selected.datum().seconds));
-          centerTextData = [dataset[0]];
-        } else {
-          _(d3.selectAll("path")[0]).each(function(arcPath){
-            var d3arc = d3.select(arcPath);
-            d3arc.attr("fill", colorScale(d3arc.datum().seconds));
-          });
-          d3selected.attr("fill", selectionColor);
-          centerTextData = [d];
-        }
+        _(d3.selectAll("path")[0]).each(function(arcPath){
+          var d3arc = d3.select(arcPath);
+          d3arc.attr("fill", colorScale(d3arc.datum().seconds));
+        });
+
+        d3selected.attr("fill", selectionColor);
+        centerTextData = [d];
         $('.route_title').text(routesList[centerTextData[0].routeTag]);
         updateCenter(centerTextData);
-        console.log(d.routeTag +': '+ d.seconds);
+
+        //console.log(d.routeTag +': '+ d.seconds);
       });
 
     // enter and update for the center text
