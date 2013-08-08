@@ -4,25 +4,8 @@
   var w = 500,
       h = 500;
 
-var makeChart = function(stop, route) {
-  var chart = {};
-
-  $(".chartsDiv").prepend('<div class="chart_class"></div>');
-  chart.div = $(".chartsDiv").children().first();
-
-  $(chart.div).html('<div class="route_title">'+ routesList[route] + '</div>');
-
-  chart.vis = d3.select(".chart_class:first-child").append("svg:svg")
-              .attr('width', w)
-              .attr('height', h)
-              .style('border', '1px solid black');
-
-  updateChart(stop, route, chart);
-
-  return chart;
-};
-
-queryAccuMaker = function() {
+  // returns a function that stores stops & routes to be used for a multiple stop query
+var queryStorageMaker = function() {
   var memo = {};
 
   return function(stop, route, del) {
@@ -42,16 +25,39 @@ queryAccuMaker = function() {
   };
 };
 
-var queriesToStop = queryAccuMaker();
-var queriesToDest = queryAccuMaker();
+var queriesToStop = queryStorageMaker();
+var queriesToDest = queryStorageMaker();
+
+var makeChart = function(stop, route) {
+  var chart = {};
+
+  $(".chartsDiv").prepend('<div class="chart_class"></div>');
+  chart.div = $(".chartsDiv").children().first();
+
+  $(chart.div).html('<div class="route_title">'+ routesList[route] + '</div>');
+
+  chart.vis = d3.select(".chart_class:first-child").append("svg:svg")
+              .attr('width', w)
+              .attr('height', h)
+              .style('border', '1px solid rgb(102,102,102)');
+
+  updateChart(stop, route, chart);
+
+  return chart;
+};
 
 var updateChart = function(stop, route, chart) {
 
-  var getSix = function(times) {
+  var getSixSoonest = function(times) {
     var sorted = _.sortBy(times, function(time){
       return parseInt(time.seconds, 10);
     });
     return (sorted.length>6) ? sorted.slice(0,6) : sorted;
+  };
+
+  var parseAndRender = function(xml) {
+    var times = getSixSoonest(parseXMLmulti(xml));
+    render(times, chart.vis);
   };
 
   if(chart.timer) { window.clearInterval(chart.timer); }
@@ -63,16 +69,10 @@ var updateChart = function(stop, route, chart) {
   var queryStop = queriesToStop(stop, route);
   var queryDest = queriesToDest(dest, route);
 
-  getMultiStops(queryStop, function(xml){
-    var times = getSix(parseXMLmulti(xml));
-    render(times, chart.vis);
-  });
+  getMultiStops(queryStop, parseAndRender);
 
   chart.timer = setInterval(function(){
-    getMultiStops(queryStop, function(xml){
-      var times = getSix(parseXMLmulti(xml));
-      render(times, chart.vis);
-    });
+    getMultiStops(queryStop, parseAndRender);
   }, 14500);
 };
 
@@ -83,22 +83,32 @@ var render = function(dataset, vis) {
     console.log(time.seconds);
   });
 
-  var g = vis.selectAll("g.arcGroup");
+  // constants
+  var pi = Math.PI;
+  var aMin = 75;
+  var aWidth = 20;
+  var aPad = 2;
+  var selColor = 'rgb(252,125,71)';
+  //var colorScale = d3.scale.linear();
 
-  var tr_time = 4500;
+  var colorScale = d3.scale.linear()
+      .domain([0, d3.max(dataset, function(d) { return parseInt(d.seconds, 10); })])
+      .range(["rgb(242,229,211)","rgb(191,223,205)","rgb(139,206,180)"]);
+
+  var tr_time = 3000;
+  var g = vis.selectAll("g.arcGroup");
+  var d3centerText = vis.selectAll("#timeDisplay");
 
   if(g[0] && g[0][0]) {
     var pastBus = d3.select(g[0][0]).select("path.arcPath").datum();
     if( (pastBus.seconds<45) && (dataset[0].vehicle != pastBus.vehicle) ) {
-      tr_time = 1500;
+      tr_time = 1000;
       g[0][0].remove();
       g[0].splice(0,1);
     }
   }
 
   g = g.data(dataset);
-
-  var d3centerText = vis.selectAll("#timeDisplay");
   var centerSec = [dataset[0]];
 
   var updateCenter = function(newData) {
@@ -106,13 +116,6 @@ var render = function(dataset, vis) {
       return toMin(d.seconds);
     });
   };
-
-  var pi = Math.PI;
-  var aMin = 75;
-  var aWidth = 15;
-  var aPad = 1;
-
-  var selColor = 'rgb(255,0,0)';
 
   var arc = d3.svg.arc()
       .innerRadius(function(d, i) {
@@ -123,13 +126,13 @@ var render = function(dataset, vis) {
       })
       .startAngle(0 * (pi/180))
       .endAngle(function(d) {
-        return parseFloat((d.seconds/60)*6 * (pi/180));
+        return parseFloat((d.seconds/30)*6 * (pi/180));
       });
 
-  var greenGradient = function(d) {
-    var g = Math.floor((1 - d.seconds/4000)*255);
-    return "rgb(0, "+ g +", 0)";
-  };
+  // var arcGradient = function(d) {
+  //   var g = Math.floor((1 - d.seconds/4000)*255);
+  //   return "rgb(0, "+ g +", 0)";
+  // };
 
     // love this.
   var toMin = function(sec) {
@@ -146,7 +149,7 @@ var render = function(dataset, vis) {
           updateCenter(centerSec);
           return selColor;
         } else {
-          return greenGradient(d);
+          return colorScale(d.seconds);
         }
       })
       .attr("d", arc);
@@ -156,8 +159,10 @@ var render = function(dataset, vis) {
       .attr("class", 'arcPath')
       .attr("d", arc)
       .attr("transform", 'translate('+ w/2 +','+ h/2 +')')
+      .attr("stroke", "rgba(153, 153, 153, 0.10)")
+      .attr("stroke-width", "2px")
       .attr("fill", function(d){
-        return greenGradient(d);
+        return colorScale(d.seconds);
       });
 
     // moved event handler from enter() as there were closure issues with referencing old dataset[0]
@@ -166,12 +171,12 @@ var render = function(dataset, vis) {
         var d3selected = d3.select(this);
 
         if(d3selected.attr("fill")===selColor) {
-          d3selected.attr("fill", greenGradient(d3selected.datum()));
+          d3selected.attr("fill", colorScale(d3selected.datum().seconds));
           updateCenter([dataset[0]]);
         } else {
           _(d3.selectAll("path")[0]).each(function(arcPath){
             var d3arc = d3.select(arcPath);
-            d3arc.attr("fill", greenGradient(d3arc.datum()));
+            d3arc.attr("fill", colorScale(d3arc.datum().seconds));
           });
           d3selected.attr("fill", selColor);
           updateCenter([d3selected.datum()]);
@@ -182,10 +187,11 @@ var render = function(dataset, vis) {
 
   updateCenter(centerSec);
   d3centerText = d3centerText.data(centerSec);
-  d3centerText.enter().append("text")
+  d3centerText.enter().append("svg:text")
       .attr("id", "timeDisplay")
-      .attr("x", w/2)
-      .attr("y", h/2)
+      .attr("text-anchor", 'middle')
+      .attr("x", Math.floor(w/2))
+      .attr("y", Math.floor(h/2+36))
       .text(function(d){
         return toMin(d.seconds);
       });

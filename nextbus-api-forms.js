@@ -8,6 +8,8 @@
     });
   };
 
+    // needed a custom query function since the query URL reuses the "stops" key
+    // stopsArray is an array of arrays. the nested arrays are ordered [route, stop]
   var getMultiStops = function(stopsArray, callback) {
     var stopsQuery = 'http://webservices.nextbus.com/service/publicXMLFeed?command=predictionsForMultiStops&a=sf-muni';
 
@@ -20,10 +22,9 @@
     });
   };
 
-  var parseXMLstops = function(xml, callback) {
     // converting raw xml: http://webservices.nextbus.com/service/publicXMLFeed?command=routeConfig&a=sf-muni&r=J
     // into two objects, then passing them to a callback
-
+  var parseXMLstops = function(xml, callback) {
     routes = {};
     var routeTag;
     $(xml).find("direction").each(function(){
@@ -51,6 +52,48 @@
     });
 
     return callback ? callback(stopsInfo, routes) : {stopsInfo:stopsInfo, routes:routes};
+  };
+
+    // parses prediction XML for single stops:
+    //  http://webservices.nextbus.com/service/publicXMLFeed?command=predictions&a=sf-muni&r=5&s=5684 
+  var parseXMLtimes = function(xml, callback) {
+    var times = [];
+    var rT = $(xml).find('predictions').attr('routeTag');
+    $(xml).find('prediction').each(function(){
+      $pre = $(this);
+      var prediction = {
+        seconds: $pre.attr('seconds'),
+        vehicle: $pre.attr('vehicle'),
+        routeTag: rT
+      };
+      times.push(prediction);
+    });
+
+    return callback ? callback(times) : times;
+  };
+
+    // parses predictionsForMultiStops:
+    //  http://webservices.nextbus.com/service/publicXMLFeed?command=predictionsForMultiStops&a=sf-muni&stops=5|5684&stops=38|5684&stops=38|5689
+var parseXMLmulti = function(xml, callback) {
+    var times = [];
+    var predictions = $(xml).find('predictions').each(function(){
+      var $prs = $(this);
+      var routeTag = $prs.attr('routeTag');
+      var stopTag = $prs.attr('stopTag');
+
+      $prs.find('predictions > direction > prediction').each(function(){
+        var $pr = $(this);
+        var prediction = {
+          routeTag: routeTag,
+          stopTag: stopTag,
+          seconds: $pr.attr('seconds'),
+          vehicle: $pr.attr('vehicle')
+        };
+        times.push(prediction);
+      });
+    });
+
+    return callback ? callback(times) : times;
   };
 
   var routeOption = Handlebars.compile('<option value="{{value}}">{{title}}{{#if from}} from {{from}}{{/if}}</option>');
@@ -114,42 +157,4 @@
       }
       if(stopTag===selectedStop) { flag = true; }
     });
-  };
-
-  var parseXMLtimes = function(xml, callback) {
-    var times = [];
-    var rT = $(xml).find('predictions').attr('routeTag');
-    $(xml).find('prediction').each(function(){
-      $pre = $(this);
-      var prediction = {
-        seconds: $pre.attr('seconds'),
-        vehicle: $pre.attr('vehicle'),
-        routeTag: rT
-      };
-      times.push(prediction);
-    });
-
-    return callback ? callback(times) : times;
-  };
-
-var parseXMLmulti = function(xml, callback) {
-    var times = [];
-    var predictions = $(xml).find('predictions').each(function(){
-      var $prs = $(this);
-      var routeTag = $prs.attr('routeTag');
-      var stopTag = $prs.attr('stopTag');
-
-      $prs.find('predictions > direction > prediction').each(function(){
-        var $pr = $(this);
-        var prediction = {
-          routeTag: routeTag,
-          stopTag: stopTag,
-          seconds: $pr.attr('seconds'),
-          vehicle: $pr.attr('vehicle')
-        };
-        times.push(prediction);
-      });
-    });
-
-    return callback ? callback(times) : times;
   };

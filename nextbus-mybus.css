@@ -1,0 +1,8 @@
+#timeDisplay {
+  font-family: helvetica, sans-serif;
+  font-size: 108px;
+  font-weight: bold;
+  fill: rgba(112,158,192, 1);
+  stroke: rgb(102,102,102, 0.75);
+  stroke-width: 1px;
+}
