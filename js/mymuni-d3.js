@@ -156,11 +156,12 @@ var render = function(dataset, vis) {
   gArc.enter().append("svg:g").attr("class", 'arcGroup')
       .append("svg:path")
       .attr("class", 'arcPath')
-      .attr("stroke", "rgba(153, 153, 153, 0.10)")
-      .attr("stroke-width", '2px')
       .attr("fill", function(d){
         return colorScale(d.seconds);
       })
+      .transition()
+      .ease("elastic")
+      .duration(750)
       .attr("d", arc);
 
     // moved event handler from enter() as there were closure issues with referencing old dataset[0]

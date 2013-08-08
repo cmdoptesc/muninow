@@ -5,3 +5,9 @@
   stroke: rgb(102,102,102, 0.75);
   stroke-width: 2px;
 }
+
+.arcPath {
+  stroke: rgba(153, 153, 153, 0.10);
+  stroke-width: 2px;
+  cursor: pointer;
+}
