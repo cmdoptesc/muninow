@@ -1,9 +1,3 @@
-  // makeChart inserts a DIV and SVG within the DIV, returns a chart obj
-  //  that keeps track of various items related to the chart
-
-  var w = 500,
-      h = 500;
-
   // returns a function that stores stops & routes to be used for a multiple stop query
 var queryStorageMaker = function() {
   var memo = {};
@@ -31,15 +25,15 @@ var queriesToDest = queryStorageMaker();
 var makeChart = function(stop, route) {
   var chart = {};
 
-  $(".chartsDiv").prepend('<div class="chart_class"></div>');
-  chart.div = $(".chartsDiv").children().first();
+  $chartArea = $("#chartArea");
 
-  $(chart.div).html('<h2 class="route_title">'+ routesList[route] + '</h2>');
+  $chartArea.html('<h2 class="route_title">'+ routesList[route] + '</h2>');
 
-  chart.vis = d3.select(".chart_class:first-child").append("svg:svg")
-              .attr('width', w)
-              .attr('height', h)
-              .style('border', '1px solid rgb(102,102,102)');
+  var blah = $chartArea.append('<div class="chart_class"></div>');
+  chart.div = $chartArea.children().last();
+
+  chart.vis = d3.select(chart.div[0]).append("svg:svg")
+                .style('border', '1px solid rgba(153,153,153, 0.5)');
 
   updateChart(stop, route, chart);
 
@@ -62,7 +56,6 @@ var updateChart = function(stop, route, chart) {
 
   if(chart.timer) { window.clearInterval(chart.timer); }
   $(chart.vis[0]).empty();
-  $(chart.div).children().first().text(routesList[route]);
 
   var dest = $("#destSelector").val();
 
@@ -83,11 +76,18 @@ var render = function(dataset, vis) {
     console.log(time.seconds);
   });
 
+  var w = $(vis[0]).width();
+  var h = $(vis[0]).height();
+  var smlr = (w<h) ? w : h;
+
+  var cX = Math.round(w/2);
+  var cY = ((h/2) > w) ? Math.floor(h/3) : Math.floor(h/2);
+
   // constants
   var pi = Math.PI;
-  var arcMin = 75;
-  var arcWidth = 20;
-  var arcPad = 2;
+  var arcMin = Math.floor(smlr*0.15)  ;
+  var arcWidth = Math.floor(arcMin/3.75);
+  var arcPad = Math.ceil(arcWidth*0.1);
   var selectionColor = 'rgb(252,125,71)';
 
   var colorScale = d3.scale.linear()
@@ -95,26 +95,29 @@ var render = function(dataset, vis) {
       .range(["rgb(242,229,211)","rgb(191,223,205)","rgb(139,206,180)"]);
 
   var transitionTime = 3000;
-  var g = vis.selectAll("g.arcGroup");
+  var g = vis.select("g.centerGroup");
+  var gArc = vis.selectAll("g.arcGroup");
   var d3centerText = vis.selectAll("#timeDisplay");
 
     // checks to see if the past bus has rolled off, if so, delete the associated graphic
-  if(g[0] && g[0][0]) {
-    var pastBus = d3.select(g[0][0]).select("path.arcPath").datum();
+  if(gArc[0] && gArc[0][0]) {
+    var pastBus = d3.select(gArc[0][0]).select("path.arcPath").datum();
     if( (pastBus.seconds<45) && (dataset[0].vehicle != pastBus.vehicle) ) {
       transitionTime = 1000;
-      g[0][0].remove();
-      g[0].splice(0,1);
+      gArc[0][0].remove();
+      gArc[0].splice(0,1);
     }
   }
 
-  g = g.data(dataset);
+  gArc = gArc.data(dataset);
   var centerTextData = [dataset[0]];
 
   var updateCenter = function(newData) {
     d3centerText.data(newData).text(function(d){
       return toMin(d.seconds);
-    });
+    })
+    .style("font-size", Math.floor(arcMin*1.44) + 'px')
+    .attr("transform", 'translate('+ cX +','+ parseInt(cY+arcMin/2, 10) +')');
   };
 
   var toMin = function(sec) {
@@ -136,9 +139,10 @@ var render = function(dataset, vis) {
       });
 
     // update for arcs
-  g.select("path.arcPath")
+  gArc.select("path.arcPath")
       .transition()
       .duration(transitionTime)
+      .attr("transform", 'translate('+ cX +','+ cY +')')
       .attr("fill", function(d){
         if(d3.select(this).attr("fill")===selectionColor) {
           centerTextData = [d3.select(this).datum()];
@@ -151,11 +155,11 @@ var render = function(dataset, vis) {
       .attr("d", arc);
 
     // enter for arcs
-  g.enter().append("svg:g").attr("class", 'arcGroup')
+  gArc.enter().append("svg:g").attr("class", 'arcGroup')
       .append("svg:path")
       .attr("class", 'arcPath')
       .attr("d", arc)
-      .attr("transform", 'translate('+ w/2 +','+ h/2 +')')
+      .attr("transform", 'translate('+ cX +','+ cY +')')
       .attr("stroke", "rgba(153, 153, 153, 0.10)")
       .attr("stroke-width", "2px")
       .attr("fill", function(d){
@@ -184,14 +188,9 @@ var render = function(dataset, vis) {
       });
 
     // update and enter for the center text
-  updateCenter(centerTextData);
   d3centerText = d3centerText.data(centerTextData);
   d3centerText.enter().append("svg:text")
       .attr("id", "timeDisplay")
-      .attr("text-anchor", 'middle')
-      .attr("x", Math.floor(w/2))
-      .attr("y", Math.floor(h/2+36))
-      .text(function(d){
-        return toMin(d.seconds);
-      });
+      .attr("text-anchor", 'middle');
+  updateCenter(centerTextData);
 };
