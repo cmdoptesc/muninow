@@ -66,13 +66,13 @@ var updateChart = function(stop, route, chart) {
 
   var dest = $("#destSelector").val();
 
-  var queryStop = queriesToStop(stop, route);
-  var queryDest = queriesToDest(dest, route);
+  chart.queryStop = queriesToStop(stop, route);
+  chart.queryDest = queriesToDest(dest, route);
 
-  getMultiStops(queryStop, parseAndRender);
+  getMultiStops(chart.queryStop, parseAndRender);
 
   chart.timer = setInterval(function(){
-    getMultiStops(queryStop, parseAndRender);
+    getMultiStops(chart.queryStop, parseAndRender);
   }, 14500);
 };
 

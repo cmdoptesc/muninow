@@ -1,28 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title>myMuni</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="nextbus-mybus.css" />
-     <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0-rc1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="nextbus-mybus.css" />
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc1/css/bootstrap.min.css" media="screen">
     <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.1/underscore-min.js"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/1.0.0/handlebars.min.js"></script>
-    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0-rc1/js/bootstrap.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc1/js/bootstrap.min.js"></script>
   </head>
   <body>
 
     <div class="container">
       <h1>myMuni</h1>
 
-      <form id="routeForm">
-        <select id="routeSelector"></select> heading <select id="directionSelector"></select><br />
-
-        <select id="stopSelector"></select> to <select id="destSelector"></select><br />
-
-        <input type="button" value="Check Stop" id="buttonRoute">
-
+      <form id="routeForm" class="form-horizontal">
+          <select id="routeSelector" class="form-control input-sm"></select><br />
+          <select id="directionSelector" class="form-control input-sm"></select>
+          <label>From:</label><select id="stopSelector" class="form-control input-sm"></select>
+          <label>To:</label><select id="destSelector" class="form-control input-sm"></select><br />
+        <p><button type="button" class="btn btn-primary btn-xs" id="buttonRoute">Add Route</button></p>
       </form>
 
       <div class="chartsDiv"></div>
