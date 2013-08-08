@@ -85,31 +85,30 @@ var render = function(dataset, vis) {
 
   // constants
   var pi = Math.PI;
-  var aMin = 75;
-  var aWidth = 20;
-  var aPad = 2;
-  var selColor = 'rgb(252,125,71)';
-  //var colorScale = d3.scale.linear();
+  var arcMin = 75;
+  var arcWidth = 20;
+  var arcPad = 2;
+  var selectionColor = 'rgb(252,125,71)';
 
   var colorScale = d3.scale.linear()
       .domain([0, d3.max(dataset, function(d) { return parseInt(d.seconds, 10); })])
       .range(["rgb(242,229,211)","rgb(191,223,205)","rgb(139,206,180)"]);
 
-  var tr_time = 3000;
+  var transitionTime = 3000;
   var g = vis.selectAll("g.arcGroup");
   var d3centerText = vis.selectAll("#timeDisplay");
 
   if(g[0] && g[0][0]) {
     var pastBus = d3.select(g[0][0]).select("path.arcPath").datum();
     if( (pastBus.seconds<45) && (dataset[0].vehicle != pastBus.vehicle) ) {
-      tr_time = 1000;
+      transitionTime = 1000;
       g[0][0].remove();
       g[0].splice(0,1);
     }
   }
 
   g = g.data(dataset);
-  var centerSec = [dataset[0]];
+  var centerTextData = [dataset[0]];
 
   var updateCenter = function(newData) {
     d3centerText.data(newData).text(function(d){
@@ -119,10 +118,10 @@ var render = function(dataset, vis) {
 
   var arc = d3.svg.arc()
       .innerRadius(function(d, i) {
-        return aMin + i*(aWidth) + aPad;
+        return arcMin + i*(arcWidth) + arcPad;
       })
       .outerRadius(function(d, i) {
-        return aMin + (i+1)*(aWidth);
+        return arcMin + (i+1)*(arcWidth);
       })
       .startAngle(0 * (pi/180))
       .endAngle(function(d) {
@@ -142,12 +141,12 @@ var render = function(dataset, vis) {
 
   g.select("path.arcPath")
       .transition()
-      .duration(tr_time)
+      .duration(transitionTime)
       .attr("fill", function(d){
-        if(d3.select(this).attr("fill")===selColor) {
-          centerSec = [d3.select(this).datum()];
-          updateCenter(centerSec);
-          return selColor;
+        if(d3.select(this).attr("fill")===selectionColor) {
+          centerTextData = [d3.select(this).datum()];
+          updateCenter(centerTextData);
+          return selectionColor;
         } else {
           return colorScale(d.seconds);
         }
@@ -170,24 +169,24 @@ var render = function(dataset, vis) {
     .on("click", function(d, i){
         var d3selected = d3.select(this);
 
-        if(d3selected.attr("fill")===selColor) {
+        if(d3selected.attr("fill")===selectionColor) {
           d3selected.attr("fill", colorScale(d3selected.datum().seconds));
-          centerSec = [dataset[0]];
+          centerTextData = [dataset[0]];
         } else {
           _(d3.selectAll("path")[0]).each(function(arcPath){
             var d3arc = d3.select(arcPath);
             d3arc.attr("fill", colorScale(d3arc.datum().seconds));
           });
-          d3selected.attr("fill", selColor);
-          centerSec = [d];
+          d3selected.attr("fill", selectionColor);
+          centerTextData = [d];
         }
-        $('.route_title').text(routesList[centerSec[0].routeTag]);
-        updateCenter(centerSec);
+        $('.route_title').text(routesList[centerTextData[0].routeTag]);
+        updateCenter(centerTextData);
         console.log(d.routeTag +': '+ d.seconds);
       });
 
-  updateCenter(centerSec);
-  d3centerText = d3centerText.data(centerSec);
+  updateCenter(centerTextData);
+  d3centerText = d3centerText.data(centerTextData);
   d3centerText.enter().append("svg:text")
       .attr("id", "timeDisplay")
       .attr("text-anchor", 'middle')
