@@ -1,5 +1,3 @@
-// var nb = function() {
-
   var getNextbus = function(query, callback) {
     var apiUrl = 'http://webservices.nextbus.com/service/publicXMLFeed';
 
@@ -138,8 +136,6 @@ var parseXMLmulti = function(xml, callback) {
     stopTag ? $stopSel.val(stopTag) : stopTag = $stopSel.val();
     displayDestinations(stopsInfo, routes, dirTag, stopTag);
   };
-
-// }();
 
   var displayDestinations = function(stopsInfo, routes, dirTag, selectedStop) {
     var $destSel = $("#destSelector");

@@ -98,6 +98,7 @@ var render = function(dataset, vis) {
   var g = vis.selectAll("g.arcGroup");
   var d3centerText = vis.selectAll("#timeDisplay");
 
+    // checks to see if the past bus has rolled off, if so, delete the associated graphic
   if(g[0] && g[0][0]) {
     var pastBus = d3.select(g[0][0]).select("path.arcPath").datum();
     if( (pastBus.seconds<45) && (dataset[0].vehicle != pastBus.vehicle) ) {
@@ -116,6 +117,12 @@ var render = function(dataset, vis) {
     });
   };
 
+  var toMin = function(sec) {
+    var fuzzy = 5*( 5 - sec/60 );
+    return ( sec%60 > fuzzy ) ? Math.ceil(sec/60) : Math.floor(sec/60);
+  };
+
+    // defining arc accessor
   var arc = d3.svg.arc()
       .innerRadius(function(d, i) {
         return arcMin + i*(arcWidth) + arcPad;
@@ -128,17 +135,7 @@ var render = function(dataset, vis) {
         return parseFloat((d.seconds/30)*6 * (pi/180));
       });
 
-  // var arcGradient = function(d) {
-  //   var g = Math.floor((1 - d.seconds/4000)*255);
-  //   return "rgb(0, "+ g +", 0)";
-  // };
-
-    // love this.
-  var toMin = function(sec) {
-    var fuzzy = 5*( 5 - sec/60 );
-    return ( sec%60 > fuzzy ) ? Math.ceil(sec/60) : Math.floor(sec/60);
-  };
-
+    // update for arcs
   g.select("path.arcPath")
       .transition()
       .duration(transitionTime)
@@ -153,6 +150,7 @@ var render = function(dataset, vis) {
       })
       .attr("d", arc);
 
+    // enter for arcs
   g.enter().append("svg:g").attr("class", 'arcGroup')
       .append("svg:path")
       .attr("class", 'arcPath')
@@ -185,6 +183,7 @@ var render = function(dataset, vis) {
         console.log(d.routeTag +': '+ d.seconds);
       });
 
+    // update and enter for the center text
   updateCenter(centerTextData);
   d3centerText = d3centerText.data(centerTextData);
   d3centerText.enter().append("svg:text")

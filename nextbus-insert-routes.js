@@ -110,7 +110,7 @@ var routesInsert = [
   ["61", "California Cable Car"]];
 
 var routesList = {};
-// This should be in some sort of init function
+  // create a lookup hash
 _(routesInsert).each(function(route){
   $("#routeSelector").append('<option value="'+ route[0] +'">'+ route[1] +'</option>');
   routesList[route[0]] = route[1];
