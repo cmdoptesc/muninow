@@ -157,13 +157,15 @@ var render = function(dataset, vis) {
       .attr("transform", 'translate('+ w/2 +','+ h/2 +')')
       .attr("fill", function(d){
         return greenGradient(d);
-      })
-      .on("click", function(d, i){
+      });
+
+    // moved event handler from enter() as there were closure issues with referencing old dataset[0]
+  d3.selectAll("path.arcPath")
+    .on("click", function(d, i){
         var d3selected = d3.select(this);
 
         if(d3selected.attr("fill")===selColor) {
           d3selected.attr("fill", greenGradient(d3selected.datum()));
-          console.log('first element', dataset[0]);
           updateCenter([dataset[0]]);
         } else {
           _(d3.selectAll("path")[0]).each(function(arcPath){
@@ -178,9 +180,7 @@ var render = function(dataset, vis) {
       });
 
   updateCenter(centerSec);
-
   d3centerText = d3centerText.data(centerSec);
-
   d3centerText.enter().append("text")
       .attr("id", "timeDisplay")
       .attr("x", w/2)
