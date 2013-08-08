@@ -34,6 +34,7 @@ var makeChart = function(stop, route) {
 
   chart.vis = d3.select(chart.div[0]).append("svg:svg")
                 .style('border', '1px solid rgba(153,153,153, 0.5)');
+  (chart.vis).append("svg:g").attr("class", 'centerGroup');
 
   updateChart(stop, route, chart);
 
@@ -55,7 +56,6 @@ var updateChart = function(stop, route, chart) {
   };
 
   if(chart.timer) { window.clearInterval(chart.timer); }
-  $(chart.vis[0]).empty();
 
   var dest = $("#destSelector").val();
 
@@ -70,12 +70,8 @@ var updateChart = function(stop, route, chart) {
 };
 
 var render = function(dataset, vis) {
-  console.log("Incoming buses: ", dataset);
-  console.log("Times:");
-  _(dataset).each(function(time){
-    console.log(time.seconds);
-  });
 
+  // constants
   var w = $(vis[0]).width();
   var h = $(vis[0]).height();
   var smlr = (w<h) ? w : h;
@@ -83,7 +79,6 @@ var render = function(dataset, vis) {
   var cX = Math.round(w/2);
   var cY = ((h/2) > w) ? Math.floor(h/3) : Math.floor(h/2);
 
-  // constants
   var pi = Math.PI;
   var arcMin = Math.floor(smlr*0.15)  ;
   var arcWidth = Math.floor(arcMin/3.75);
@@ -95,9 +90,13 @@ var render = function(dataset, vis) {
       .range(["rgb(242,229,211)","rgb(191,223,205)","rgb(139,206,180)"]);
 
   var transitionTime = 3000;
+
+    // main group where objects are located -- saves from declaring multiple transforms
   var g = vis.select("g.centerGroup");
-  var gArc = vis.selectAll("g.arcGroup");
-  var d3centerText = vis.selectAll("#timeDisplay");
+  g.attr("transform", 'translate('+ cX +','+ cY +')');
+
+  var gArc = g.selectAll("g.arcGroup");
+  var d3centerText = g.selectAll("#timeDisplay");
 
     // checks to see if the past bus has rolled off, if so, delete the associated graphic
   if(gArc[0] && gArc[0][0]) {
@@ -117,7 +116,7 @@ var render = function(dataset, vis) {
       return toMin(d.seconds);
     })
     .style("font-size", Math.floor(arcMin*1.44) + 'px')
-    .attr("transform", 'translate('+ cX +','+ parseInt(cY+arcMin/2, 10) +')');
+    .attr("transform", 'translate(0,'+ parseInt(arcMin/2, 10) +')');
   };
 
   var toMin = function(sec) {
@@ -135,14 +134,13 @@ var render = function(dataset, vis) {
       })
       .startAngle(0 * (pi/180))
       .endAngle(function(d) {
-        return parseFloat((d.seconds/30)*6 * (pi/180));
+        return parseFloat((d.seconds/60)*6 * (pi/180));
       });
 
     // update for arcs
   gArc.select("path.arcPath")
       .transition()
       .duration(transitionTime)
-      .attr("transform", 'translate('+ cX +','+ cY +')')
       .attr("fill", function(d){
         if(d3.select(this).attr("fill")===selectionColor) {
           centerTextData = [d3.select(this).datum()];
@@ -158,13 +156,12 @@ var render = function(dataset, vis) {
   gArc.enter().append("svg:g").attr("class", 'arcGroup')
       .append("svg:path")
       .attr("class", 'arcPath')
-      .attr("d", arc)
-      .attr("transform", 'translate('+ cX +','+ cY +')')
       .attr("stroke", "rgba(153, 153, 153, 0.10)")
-      .attr("stroke-width", "2px")
+      .attr("stroke-width", '2px')
       .attr("fill", function(d){
         return colorScale(d.seconds);
-      });
+      })
+      .attr("d", arc);
 
     // moved event handler from enter() as there were closure issues with referencing old dataset[0]
   d3.selectAll("path.arcPath")
@@ -187,7 +184,7 @@ var render = function(dataset, vis) {
         console.log(d.routeTag +': '+ d.seconds);
       });
 
-    // update and enter for the center text
+    // enter and update for the center text
   d3centerText = d3centerText.data(centerTextData);
   d3centerText.enter().append("svg:text")
       .attr("id", "timeDisplay")
