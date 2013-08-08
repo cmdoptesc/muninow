@@ -1,25 +1,32 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <title>myMuni</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="nextbus-mybus.css" />
+     <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0-rc1/css/bootstrap.min.css">
     <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.1/underscore-min.js"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/1.0.0/handlebars.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0-rc1/js/bootstrap.min.js"></script>
   </head>
   <body>
 
-    <form id="routeForm">
-      <select id="routeSelector"></select> heading <select id="directionSelector"></select><br />
+    <div class="container">
+      <h1>myMuni</h1>
 
-      <select id="stopSelector"></select> to <select id="destSelector"></select><br />
+      <form id="routeForm">
+        <select id="routeSelector"></select> heading <select id="directionSelector"></select><br />
 
-      <input type="button" value="Check Stop" id="buttonRoute">
+        <select id="stopSelector"></select> to <select id="destSelector"></select><br />
 
-    </form>
+        <input type="button" value="Check Stop" id="buttonRoute">
 
-    <div class="chartsDiv"></div>
+      </form>
+
+      <div class="chartsDiv"></div>
+    </div>
 
     <script>
       var routes,

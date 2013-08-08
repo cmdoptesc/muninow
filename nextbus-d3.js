@@ -34,7 +34,7 @@ var makeChart = function(stop, route) {
   $(".chartsDiv").prepend('<div class="chart_class"></div>');
   chart.div = $(".chartsDiv").children().first();
 
-  $(chart.div).html('<div class="route_title">'+ routesList[route] + '</div>');
+  $(chart.div).html('<h2 class="route_title">'+ routesList[route] + '</h2>');
 
   chart.vis = d3.select(".chart_class:first-child").append("svg:svg")
               .attr('width', w)
@@ -172,16 +172,17 @@ var render = function(dataset, vis) {
 
         if(d3selected.attr("fill")===selColor) {
           d3selected.attr("fill", colorScale(d3selected.datum().seconds));
-          updateCenter([dataset[0]]);
+          centerSec = [dataset[0]];
         } else {
           _(d3.selectAll("path")[0]).each(function(arcPath){
             var d3arc = d3.select(arcPath);
             d3arc.attr("fill", colorScale(d3arc.datum().seconds));
           });
           d3selected.attr("fill", selColor);
-          updateCenter([d3selected.datum()]);
+          centerSec = [d];
         }
-
+        $('.route_title').text(routesList[centerSec[0].routeTag]);
+        updateCenter(centerSec);
         console.log(d.routeTag +': '+ d.seconds);
       });
 
