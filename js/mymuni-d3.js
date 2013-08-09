@@ -77,8 +77,8 @@ var updateChart = function(stop, route, chart) {
 
 var d3methods = {
 
-  _selectionColor: 'rgb(252,125,71)',
-  _highlightColor: 'rgb(222,174,138)',
+  _selectionColor: '#fc7d47',
+  _highlightColor: '#deae8a',
 
   _toMin: function(sec) {
     var fuzzy = 5*( 5 - sec/60 );
@@ -88,7 +88,7 @@ var d3methods = {
   _colorScaleMaker: function(max) {
     return d3.scale.linear()
         .domain([0, max])
-        .range(["rgb(242,229,211)","rgb(191,223,205)","rgb(139,206,180)"]);
+        .range(["rgb(242,229,211)", "rgb(191,223,205)", "rgb(139,206,180)"]);
   },
 
   ripple: function(vis) {
@@ -108,30 +108,23 @@ var d3methods = {
           .duration(800)
           .attr("fill", highlightColor)
           .each("start", function(d, i){
-            d3centerText
-              .transition()
-              .delay(450)
-              .text(d3methods._toMin(d.seconds));
+            d3centerText.transition()
+                .delay(440)
+                .text(d3methods._toMin(d.seconds));
           })
           .each("end", function(d, i) {
             var indx = i;
-            d3.select(this)
-              .transition()
+            d3.select(this).transition()
                 .duration(350)
                 .attr("fill", colorScale(d.seconds))
                 .each("end", function(d, i) {
-                      // i is actually zero at this level because the selection here is only one node
                   if(indx===lastIndex) {
-                    var soonest = d3.select(d3arcs[0][0]);
-                    d3centerText.text(d3methods._toMin(d3centerText.datum().seconds));
-                    soonest.transition()
+                    d3centerText.transition()
+                        .delay(100)
+                        .text(d3methods._toMin(d3centerText.datum().seconds));
+                    d3.select(d3arcs[0][0]).transition()
                         .duration(300)
-                        .attr("fill", selectionColor)
-                        .each("end", function(){
-                          // Seems redundant, but this is because tween won't change the fill back to rgb.
-                          //  if we use a hex value, it will be fine.
-                          soonest.attr("fill", selectionColor);
-                        });
+                        .attr("fill", selectionColor);
                   }
               });
           });
