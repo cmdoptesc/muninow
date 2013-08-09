@@ -62,7 +62,12 @@ var updateChart = function(stop, route, chart) {
   chart.queryStop = queriesToStop(stop, route);
   chart.queryDest = queriesToDest(dest, route);
 
-  getMultiStops(chart.queryStop, parseAndRender);
+  getMultiStops(chart.queryStop, function(xml){
+    parseAndRender(xml);
+    setTimeout(function(){
+      d3methods.ripple(chart.vis);
+    }, 500);
+  });
 
   chart.timer = setInterval(function(){
     getMultiStops(chart.queryStop, parseAndRender);
@@ -86,7 +91,7 @@ var d3methods = {
         .range(["rgb(242,229,211)","rgb(191,223,205)","rgb(139,206,180)"]);
   },
 
-  quickFlash: function(vis) {
+  ripple: function(vis) {
     var d3arcs = vis.selectAll("path.arcPath");
     var d3centerText = vis.selectAll("#timeDisplay");
 
@@ -96,31 +101,37 @@ var d3methods = {
     var selectionColor = d3methods._selectionColor;
     var highlightColor = d3methods._highlightColor;
 
-    var arcs = vis.selectAll("path.arcPath")
-        .transition()
+    d3arcs.transition()
           .delay(function(d, i){
-            return i*300;
+            return i*400;
           })
-          .duration(400)
+          .duration(800)
           .attr("fill", highlightColor)
-          // .each("start", function(d, i){
-            
-          // })
+          .each("start", function(d, i){
+            d3centerText
+              .transition()
+              .delay(450)
+              .text(d3methods._toMin(d.seconds));
+          })
           .each("end", function(d, i) {
-            d3centerText.text(d3methods._toMin(d.seconds));
             var indx = i;
             d3.select(this)
               .transition()
-                .duration(400)
+                .duration(350)
                 .attr("fill", colorScale(d.seconds))
-                .each("end", function(d) {
-                      // i is always zero at this level because the selection is only one node
+                .each("end", function(d, i) {
+                      // i is actually zero at this level because the selection here is only one node
                   if(indx===lastIndex) {
+                    var soonest = d3.select(d3arcs[0][0]);
                     d3centerText.text(d3methods._toMin(d3centerText.datum().seconds));
-                    d3.select(d3arcs[0][0])
-                      .transition()
+                    soonest.transition()
                         .duration(300)
-                        .attr("fill", selectionColor);
+                        .attr("fill", selectionColor)
+                        .each("end", function(){
+                          // Seems redundant, but this is because tween won't change the fill back to rgb.
+                          //  if we use a hex value, it will be fine.
+                          soonest.attr("fill", selectionColor);
+                        });
                   }
               });
           });
