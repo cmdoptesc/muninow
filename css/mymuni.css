@@ -1,4 +1,4 @@
-#timeDisplay {
+.center-time {
   font-family: helvetica, sans-serif;
   font-weight: bold;
   fill: rgba(112,158,192, 1);
@@ -6,7 +6,7 @@
   stroke-width: 2px;
 }
 
-.arcPath {
+.arc-path {
   stroke: rgba(153, 153, 153, 0.10);
   stroke-width: 2px;
   cursor: pointer;

@@ -5,7 +5,12 @@ var queryStorageMaker = function() {
   return function(stop, route, del) {
     if( stop && route ) {
       if(del==='true') { delete memo[route]; }
-      else { memo[route] = [route, stop]; }
+      else {
+        memo[route] = {
+          r: route,
+          s: stop
+        };
+      }
     }
 
     var query = [];
@@ -23,18 +28,18 @@ var queriesToDest = queryStorageMaker();
 var makeChart = function(stop, route) {
   var chart = {};
 
-  $chartArea = $("#chartArea");
+  $chartArea = $("#ChartArea");
 
-  $chartArea.html('<h2 class="route_title">'+ routesList[route] + '</h2>');
+  $chartArea.html('<h2 class="route-title">'+ routesList[route] + '</h2>');
+  $chartArea.append('<div class="chart-div"></div>');
 
-  var blah = $chartArea.append('<div class="chart_class"></div>');
   chart.div = $chartArea.children().last();
 
   chart.vis = d3.select(chart.div[0]).append("svg:svg")
                 .style('border', '1px solid rgba(153,153,153, 0.5)');
-  (chart.vis).append("svg:g").attr("class", 'centerGroup');
+  (chart.vis).append("svg:g").attr("class", 'center-group');
 
-  $("#additionalInfo").text("Each arc represents the number of minutes for a bus/train to each your specified stop. You can track additional lines by re-using the form above.");
+  $("#AdditionalInfo").text("Each arc represents the number of minutes for a bus/train to each your specified stop. You can track additional lines by re-using the form above.");
 
   updateChart(stop, route, chart);
 
@@ -92,8 +97,8 @@ var d3methods = {
   },
 
   ripple: function(vis) {
-    var d3arcs = vis.selectAll("path.arcPath");
-    var d3centerText = vis.selectAll("#timeDisplay");
+    var d3arcs = vis.selectAll("path.arc-path");
+    var d3centerText = vis.selectAll("text.center-time");
 
     var lastIndex = d3arcs[0].length-1;
 
@@ -153,15 +158,15 @@ var d3methods = {
     var transitionTime = 3000;
 
       // main group where objects are located -- saves from declaring multiple transforms
-    var g = vis.select("g.centerGroup");
+    var g = vis.select("g.center-group");
     g.attr("transform", 'translate('+ cX +','+ cY +')');
 
-    var gArc = g.selectAll("g.arcGroup");
-    var d3centerText = g.selectAll("#timeDisplay");
+    var gArc = g.selectAll("g.arc-group");
+    var d3centerText = g.selectAll(".center-time");
 
       // checks to see if the past bus has rolled off, if so, delete the associated graphic
     if(gArc[0] && gArc[0][0]) {
-      var pastBus = d3.select(gArc[0][0]).select("path.arcPath").datum();
+      var pastBus = d3.select(gArc[0][0]).select("path.arc-path").datum();
       if( (pastBus.seconds<45) && (dataset[0].vehicle != pastBus.vehicle) ) {
         transitionTime = 1000;
         gArc[0][0].remove();
@@ -194,7 +199,7 @@ var d3methods = {
         });
 
       // update for arcs
-    gArc.select("path.arcPath")
+    gArc.select("path.arc-path")
         .transition()
         .duration(transitionTime)
         .attr("fill", function(d){
@@ -209,16 +214,16 @@ var d3methods = {
         .attr("d", arc);
 
       // enter for arcs
-    gArc.enter().append("svg:g").attr("class", 'arcGroup')
+    gArc.enter().append("svg:g").attr("class", 'arc-group')
         .append("svg:path")
-        .attr("class", 'arcPath')
+        .attr("class", 'arc-path')
         .attr("fill", function(d, i){
           return (i===0) ? selectionColor: colorScale(d.seconds);
         })
         .attr("d", arc);
 
       // moved event handler from enter() as there were closure issues with referencing old dataset[0]
-    d3.selectAll("path.arcPath")
+    d3.selectAll("path.arc-path")
       .on("click", function(d, i){
           var d3selected = d3.select(this);
 
@@ -238,7 +243,7 @@ var d3methods = {
       // enter and update for the center text
     d3centerText = d3centerText.data(centerTextData);
     d3centerText.enter().append("svg:text")
-        .attr("id", "timeDisplay")
+        .attr("class", "center-time")
         .attr("text-anchor", 'middle');
     updateCenter(centerTextData);
   }

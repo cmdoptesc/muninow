@@ -7,12 +7,12 @@
   };
 
     // needed a custom query function since the query URL reuses the "stops" key
-    // stopsArray is an array of arrays. the nested arrays are ordered [route, stop]
+    // stopsArray is an array of stop objects in the format: {r: route tag, s: stop tag}
   var getMultiStops = function(stopsArray, callback) {
     var stopsQuery = 'http://webservices.nextbus.com/service/publicXMLFeed?command=predictionsForMultiStops&a=sf-muni';
 
     _(stopsArray).each(function(stop) {
-      stopsQuery += '&stops='+ stop[0] +'|'+ stop[1];
+      stopsQuery += '&stops='+ stop[r] +'|'+ stop[s];
     });
 
     $.get(stopsQuery, function(xml){
@@ -21,23 +21,32 @@
   };
 
     // converting raw xml: http://webservices.nextbus.com/service/publicXMLFeed?command=routeConfig&a=sf-muni&r=J
-    // into two objects, then passing them to a callback
+    // into two objects, then passing them to a callback or as an object
   var parseXMLstops = function(xml, callback) {
-    routes = {};
-    var routeTag;
-    $(xml).find("direction").each(function(){
-      routeTag = $(this).attr("tag");
-      routes[routeTag] = {
-        'title' : $(this).attr("title"),
-        'direction' : $(this).attr("name"),
+    var directions = {};
+    $(xml).find("direction").each(function(indx, dir){
+      var $this = $(dir);
+      var dirTag = $this.attr("tag");
+      directions[dirTag] = {
+        'title' : $this.attr("title"),
+        'name' : $this.attr("name"),
+        'dirTag': dirTag,
         'stops' : []
       };
-      $(this).find("stop").each(function(){
-        routes[routeTag].stops.push($(this).attr("tag"));
+      $this.find("stop").each(function(indx, stop){
+        directions[dirTag].stops.push($(stop).attr("tag"));
       });
     });
 
-    stopsInfo = {};
+    $route = $(xml).find("body > route");
+
+
+    var stopsInfo = {
+      routeTag: $route.attr("tag"),
+      title: $route.attr("title"),
+      color: $route.attr("color"),
+      oppositeColor: $route.attr("oppositeColor")
+    };
     $(xml).find("body route > stop").each(function(){
       var $this = $(this);
       var stopTag = $this.attr("tag");
@@ -49,20 +58,21 @@
       };
     });
 
-    return callback ? callback(stopsInfo, routes) : {stopsInfo:stopsInfo, routes:routes};
+    return callback ? callback(stopsInfo, directions) : {stopsInfo:stopsInfo, directions:directions};
   };
 
     // parses prediction XML for single stops:
-    //  http://webservices.nextbus.com/service/publicXMLFeed?command=predictions&a=sf-muni&r=5&s=5684 
+    //  http://webservices.nextbus.com/service/publicXMLFeed?command=predictions&a=sf-muni&r=5&s=5684
   var parseXMLtimes = function(xml, callback) {
     var times = [];
     var rT = $(xml).find('predictions').attr('routeTag');
     $(xml).find('prediction').each(function(){
       $pre = $(this);
       var prediction = {
+        routeTag: rT,
         seconds: $pre.attr('seconds'),
         vehicle: $pre.attr('vehicle'),
-        routeTag: rT
+        dirTag: $pre.attr('dirTag')
       };
       times.push(prediction);
     });
@@ -100,7 +110,7 @@ var parseXMLmulti = function(xml, callback) {
 
     // dirTag is optional. if provided, will set drop-down to the specified direction
   var displayDirections = function(stopsInfo, routes, dirTag) {
-    var $dirSel = $("#directionSelector");
+    var $dirSel = $("#DirectionSelector");
     $dirSel.empty();
     $("#stopSelector").empty();
 
@@ -109,7 +119,7 @@ var parseXMLmulti = function(xml, callback) {
     _(routes).each(function(route, key){
 
       // if a route has more than two origins add a 'from' to clarify
-      if (route.direction === 'Inbound' && Object.keys(routes).length>2) {
+      if (route.name === 'Inbound' && Object.keys(routes).length>2) {
         route.from = stopsInfo[route.stops[0]].title;
       }
 
@@ -123,7 +133,7 @@ var parseXMLmulti = function(xml, callback) {
 
     // stopTag is optional. if provided will set drop-down to specified stop
   var displayStops = function(stopsInfo, routes, dirTag, stopTag) {
-    var $stopSel = $("#stopSelector");
+    var $stopSel = $("#StopSelector");
     $stopSel.empty();
 
     _(routes[dirTag].stops).each(function(stopNum) {
@@ -138,13 +148,13 @@ var parseXMLmulti = function(xml, callback) {
   };
 
   var displayDestinations = function(stopsInfo, routes, dirTag, selectedStop) {
-    var $destSel = $("#destSelector");
+    var $destSel = $("#DestSelector");
     $destSel.empty();
 
     var stops = routes[dirTag].stops;
     var flag = false;
 
-    _(routes[dirTag].stops).each(function(stopTag) {
+    _(stops).each(function(stopTag) {
       if(flag) {
         $destSel.append(stopOption({
           value: stopTag,
