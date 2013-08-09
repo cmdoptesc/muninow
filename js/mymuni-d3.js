@@ -93,21 +93,36 @@ var d3methods = {
     var lastIndex = d3arcs[0].length-1;
 
     var colorScale = d3methods._colorScaleMaker( d3.select(d3arcs[0][lastIndex]).datum().seconds );
+    var selectionColor = d3methods._selectionColor;
     var highlightColor = d3methods._highlightColor;
 
     var arcs = vis.selectAll("path.arcPath")
         .transition()
           .delay(function(d, i){
-            return i*350;
+            return i*300;
           })
-          .duration(800)
+          .duration(400)
           .attr("fill", highlightColor)
-          .each("end", function(d, i){
+          // .each("start", function(d, i){
+            
+          // })
+          .each("end", function(d, i) {
             d3centerText.text(d3methods._toMin(d.seconds));
+            var indx = i;
             d3.select(this)
               .transition()
-              .duration(300)
-              .attr("fill", colorScale(d.seconds));
+                .duration(400)
+                .attr("fill", colorScale(d.seconds))
+                .each("end", function(d) {
+                      // i is always zero at this level because the selection is only one node
+                  if(indx===lastIndex) {
+                    d3centerText.text(d3methods._toMin(d3centerText.datum().seconds));
+                    d3.select(d3arcs[0][0])
+                      .transition()
+                        .duration(300)
+                        .attr("fill", selectionColor);
+                  }
+              });
           });
   },
 
