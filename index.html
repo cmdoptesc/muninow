@@ -9,7 +9,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="css/mymuni.css" />
+    <link rel="stylesheet" href="css/mymuni.css">
     <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc1/css/bootstrap.min.css" media="screen">
 
     <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
@@ -23,27 +23,27 @@
 
     <div class="container">
       <h1>myMuni</h1>
-
       <form id="RouteForm" class="form-horizontal">
-          <select id="RouteSelector" class="form-control input-sm">
-            <option value="null">Please select your Muni line..</option>
-          </select><br />
-          <select id="DirectionSelector" class="form-control input-sm"></select><br />
-          <label>From:</label><select id="StopSelector" class="form-control input-sm"></select><br />
-          <label>To:</label><select id="DestSelector" class="form-control input-sm"></select>
-        <p><button type="button" class="btn btn-info btn-mini" id="AddRouteButton">Add Route</button></p>
+          <p>
+            <select id="RouteSelector" class="form-control input-sm">
+              <option value="null">Please select your Muni line..</option>
+            </select>
+          </p>
+          <p>
+            <select id="DirectionSelector" class="form-control input-sm"></select>
+          </p>
+          <p>
+            <label for="StopSelector">From:</label><select id="StopSelector" class="form-control input-sm"></select>
+          </p>
+          <p>
+            <label for="DestSelector">To:</label><select id="DestSelector" class="form-control input-sm"></select>
+          </p>
+          <button type="button" class="btn btn-info btn-mini" id="AddRouteButton">Add Route</button>
       </form>
-
       <div id="AdditionalInfo"></div>
-
       <div id="ChartArea"></div>
     </div>
 
-    <script>
-
-      var charts = [];
-
-    </script>
     <script src="js/mymuni-api-forms.js"></script>
     <script src="js/mymuni-d3.js"></script>
     <script src="js/mymuni-init.js"></script>

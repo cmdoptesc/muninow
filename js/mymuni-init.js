@@ -1,11 +1,12 @@
 
-// need to figure out where to put this global var
-var routesList = {};
+// stores information of the routes the user has looked up for the session
+var routesInfo = {
+  routesList: {}
+};
 
 $(function() {
 
-    // stops information of the routes the user has looked up for the session
-  var routesInfo = {};
+  var charts = [];
 
   $("#RouteSelector").change(function(){
     var routeTag = $("#RouteSelector").val();
@@ -128,6 +129,6 @@ $(function() {
     // insert the routes into the drop down and also create a lookup hash
   _(routesToInsert).each(function(route){
     $("#RouteSelector").append('<option value="'+ route[0] +'">'+ route[1] +'</option>');
-    routesList[route[0]] = route[1];
+    routesInfo.routesList[route[0]] = route[1];
   });
 });

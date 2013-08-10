@@ -160,6 +160,6 @@ var parseXMLmulti = function(xml, callback) {
           title: stopsInfo[stopTag].title
         }));
       }
-      if(stopTag===selectedStop) { flag = true; }
+      if(stopTag === selectedStop) { flag = true; }
     });
   };
