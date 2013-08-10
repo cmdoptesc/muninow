@@ -1,5 +1,4 @@
 
-
   // returns a function that stores stops & routes to be used for a multiple stop query
 var queryStorageMaker = function() {
   var memo = {};
@@ -43,6 +42,7 @@ var deserialiseParams = function(params) {
     if(checkQuery(deserialised[i])) { queries.push(deserialised[i]); }
     i++;
   }
+
   return queries;
 };
 
@@ -70,8 +70,6 @@ var makeChart = function(stopTag, routeTag) {
   chart.vis = d3.select(chart.div[0]).append("svg:svg")
                 .style('border', '1px solid rgba(153,153,153, 0.5)');
 
-  $("#AdditionalInfo").text("Additional Muni lines may be tracked by re-using the form above.");
-
   updateTitle(routesInfo.routesList[routeTag]);
   updateChart(stopTag, routeTag, chart);
 
@@ -95,6 +93,7 @@ var parseAndRender = function(xml, vis) {
 };
 
 var updateForm = function(stopTag, routeTag) {
+  var $routeSel = $("#RouteSelector");
   $routeSel.val(routeTag);
   getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
     routesInfo[routeTag] = parseXMLstops(xml);
@@ -121,7 +120,7 @@ var updateForm = function(stopTag, routeTag) {
   });
 };
 
-var combineLineTitles = function(queries) {
+var combineTitles = function(queries) {
   var title = '';
 
   for(var i=0; i<queries.length; i++) {
@@ -138,22 +137,24 @@ var updateChart = function(stopTag, routeTag, chart) {
   $(chart.vis[0]).empty();
   (chart.vis).append("svg:g").attr("class", 'center-group');
 
-  var dest = $("#DestSelector").val();
-  var $routeSel = $("#RouteSelector");
-
-  if($routeSel.val() === '-1') {
-    updateForm(stopTag, routeTag);
-  }
+  var destTag = $("#DestSelector").val();
 
   chart.stopQueries = queriesToStop(stopTag, routeTag);
-  chart.destQueries = queriesToDest(dest, routeTag);
+  chart.destQueries = queriesToDest(destTag, routeTag);
+
+  if($("#RouteSelector").val() === '-1') {
+    updateForm(stopTag, routeTag);
+  }
 
   if(chart.stopQueries.length<1) {
     console.log('Invalid query.');
     return false;
   }
 
-  updateTitle(combineLineTitles(chart.stopQueries));
+  var bookmarkableUrl = window.location.href.split('?')[0] + '?' + serialiseQueries(chart.stopQueries);
+
+  updateTitle(combineTitles(chart.stopQueries));
+  $("#AdditionalInfo").html('Additional Muni lines may be tracked by re-using the form above. <a href="'+ bookmarkableUrl +'">Bookmarkable URL</a>');
 
   getMultiStops(chart.stopQueries, function(xml){
     parseAndRender(xml, chart.vis);
@@ -167,6 +168,8 @@ var updateChart = function(stopTag, routeTag, chart) {
       parseAndRender(xml, chart.vis);
     });
   }, 14500);
+
+  return chart;
 };
 
 var d3methods = {
@@ -342,10 +345,12 @@ var d3methods = {
               .duration(300)
               .attr("fill", highlightColor);
 
+              console.log(d);
+
           centerTextData = [d];
 
-          var busTitle = routesInfo.routesList[centerTextData[0].routeTag];
-          var stopTitle = routesInfo[centerTextData[0].routeTag].stopsInfo[centerTextData[0].stopTag].title;
+          var busTitle = routesInfo.routesList[d.routeTag];
+          var stopTitle = routesInfo[d.routeTag].stopsInfo[centerTextData[0].stopTag].title;
 
           updateTitle(busTitle +' arriving at '+ stopTitle);
           updateCenter(centerTextData);

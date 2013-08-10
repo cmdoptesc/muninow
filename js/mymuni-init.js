@@ -5,7 +5,6 @@ var routesInfo = {
 };
 
 $(function() {
-
   var charts = [];
 
   $("#RouteSelector").change(function(){
@@ -131,6 +130,17 @@ $(function() {
     $("#RouteSelector").append('<option value="'+ route[0] +'">'+ route[1] +'</option>');
     routesInfo.routesList[route[0]] = route[1];
   });
+
+  var params = window.location.search;
+  if(params.length>0) {
+    var queries = deserialiseParams(params.substr(1));
+
+    charts.push(makeChart(queries[0].s, queries[0].r));
+    for(var i=1; i<queries.length; i++) {
+      updateChart(queries[i].s, queries[i].r, charts[0]);
+    }
+  }
+
 });
 
 (function($) {
