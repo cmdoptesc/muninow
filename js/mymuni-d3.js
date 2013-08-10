@@ -94,6 +94,45 @@ var parseAndRender = function(xml, vis) {
   d3methods.render(times, vis);
 };
 
+var updateForm = function(stopTag, routeTag) {
+  $routeSel.val(routeTag);
+  getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
+    routesInfo[routeTag] = parseXMLstops(xml);
+
+    var dirTag;
+    stopTag += '';    // stopTag should be a string, but if it isn't, convert it
+    _(routesInfo[routeTag].directions).each(function(dir){
+      for(var i=0; i<dir.stops.length; i++) {
+        if(dir.stops[i] === stopTag) {
+          dirTag = dir.dirTag;
+        }
+      }
+    });
+
+    displayDirections(routesInfo[routeTag].stopsInfo, routesInfo[routeTag].directions, dirTag);
+
+    var $dirSel = $("#DirectionSelector");
+    $dirSel.val(dirTag);
+    $dirSel.change();
+
+    var $stopSel = $("#StopSelector");
+    $stopSel.val(stopTag);
+    $stopSel.change();
+  });
+};
+
+var combineLineTitles = function(queries) {
+  var title = '';
+
+  for(var i=0; i<queries.length; i++) {
+    if(i > 0) {
+      title += ' & ';
+    }
+    title += routesInfo.routesList[queries[i].r];
+  }
+  return title;
+};
+
 var updateChart = function(stopTag, routeTag, chart) {
   if(chart.timer) { window.clearInterval(chart.timer); }
   $(chart.vis[0]).empty();
@@ -103,32 +142,8 @@ var updateChart = function(stopTag, routeTag, chart) {
   var $routeSel = $("#RouteSelector");
 
   if($routeSel.val() === '-1') {
-    $routeSel.val(routeTag);
-    getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
-      routesInfo[routeTag] = parseXMLstops(xml);
-
-      var dirTag;
-      stopTag += '';    // stopTag should be a string, but if it isn't, convert it
-      _(routesInfo[routeTag].directions).each(function(dir){
-        for(var i=0; i<dir.stops.length; i++) {
-          if(dir.stops[i] === stopTag) {
-            dirTag = dir.dirTag;
-          }
-        }
-      });
-
-      displayDirections(routesInfo[routeTag].stopsInfo, routesInfo[routeTag].directions, dirTag);
-
-      var $dirSel = $("#DirectionSelector");
-      $dirSel.val(dirTag);
-      $dirSel.change();
-
-      var $stopSel = $("#StopSelector");
-      $stopSel.val(stopTag);
-      $stopSel.change();
-    });
+    updateForm(stopTag, routeTag);
   }
-
 
   chart.stopQueries = queriesToStop(stopTag, routeTag);
   chart.destQueries = queriesToDest(dest, routeTag);
@@ -138,17 +153,7 @@ var updateChart = function(stopTag, routeTag, chart) {
     return false;
   }
 
-  var chartTitle = '';
-  var amp = ' & ';
-
-  for(var i=0; i<chart.stopQueries.length; i++) {
-    if(i > 0) {
-      chartTitle += amp;
-    }
-    chartTitle += routesInfo.routesList[chart.stopQueries[i].r];
-  }
-
-  updateTitle(chartTitle);
+  updateTitle(combineLineTitles(chart.stopQueries));
 
   getMultiStops(chart.stopQueries, function(xml){
     parseAndRender(xml, chart.vis);
