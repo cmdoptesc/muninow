@@ -39,9 +39,7 @@ var serialiseQueries = function(queries) {
 var deserialiseParams = function(params) {
   var deserialised = $.deparam(params);
   var i = 0, queries = [];
-  console.log(deserialised);
   while(deserialised[i]) {
-    console.log(deserialised[i]);
     if(checkQuery(deserialised[i])) { queries.push(deserialised[i]); }
     i++;
   }
@@ -104,15 +102,32 @@ var updateChart = function(stopTag, routeTag, chart) {
   var dest = $("#DestSelector").val();
   var $routeSel = $("#RouteSelector");
 
-  // if($routeSel.val() === '-1') {
-  //   $routeSel.val(routeTag);
-  //   getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
-  //     routesInfo[routeTag] = parseXMLstops(xml);
-  //     displayDirections(routesInfo[routeTag].stopsInfo, routesInfo[routeTag].directions);
+  if($routeSel.val() === '-1') {
+    $routeSel.val(routeTag);
+    getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
+      routesInfo[routeTag] = parseXMLstops(xml);
 
-  //     _(routesInfo[])
-  //   });
-  // }
+      var dirTag;
+      stopTag += '';    // stopTag should be a string, but if it isn't, convert it
+      _(routesInfo[routeTag].directions).each(function(dir){
+        for(var i=0; i<dir.stops.length; i++) {
+          if(dir.stops[i] === stopTag) {
+            dirTag = dir.dirTag;
+          }
+        }
+      });
+
+      displayDirections(routesInfo[routeTag].stopsInfo, routesInfo[routeTag].directions, dirTag);
+
+      var $dirSel = $("#DirectionSelector");
+      $dirSel.val(dirTag);
+      $dirSel.change();
+
+      var $stopSel = $("#StopSelector");
+      $stopSel.val(stopTag);
+      $stopSel.change();
+    });
+  }
 
 
   chart.stopQueries = queriesToStop(stopTag, routeTag);
