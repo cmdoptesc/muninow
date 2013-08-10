@@ -41,44 +41,61 @@ var makeChart = function(stop, route) {
 
   $("#AdditionalInfo").text("Each arc represents the number of minutes for a bus/train to each your specified stop. You can track additional lines by re-using the form above.");
 
+  updateTitle(routesList[route]);
   updateChart(stop, route, chart);
 
   return chart;
 };
 
+var updateTitle = function(title) {
+  return $("#ChartArea .route-title").text(title);
+};
+
+var getSixSoonest = function(times) {
+  var sorted = _.sortBy(times, function(time){
+    return parseInt(time.seconds, 10);
+  });
+  return (sorted.length>6) ? sorted.slice(0,6) : sorted;
+};
+
+var parseAndRender = function(xml, vis) {
+  var times = getSixSoonest(parseXMLmulti(xml));
+  d3methods.render(times, vis);
+};
+
 var updateChart = function(stop, route, chart) {
-
-  var getSixSoonest = function(times) {
-    var sorted = _.sortBy(times, function(time){
-      return parseInt(time.seconds, 10);
-    });
-    return (sorted.length>6) ? sorted.slice(0,6) : sorted;
-  };
-
-  var parseAndRender = function(xml) {
-    var times = getSixSoonest(parseXMLmulti(xml));
-    d3methods.render(times, chart.vis);
-  };
-
   if(chart.timer) { window.clearInterval(chart.timer); }
 
   var dest = $("#destSelector").val();
 
-  chart.queryStop = queriesToStop(stop, route);
-  chart.queryDest = queriesToDest(dest, route);
+  chart.stopQueries = queriesToStop(stop, route);
+  chart.destQuesties = queriesToDest(dest, route);
 
-  getMultiStops(chart.queryStop, function(xml){
-    parseAndRender(xml);
+  var chartTitle = '';
+  var amp = ' & ';
+
+  for(var i=0; i<chart.stopQueries.length; i++) {
+    if(i>0) {
+      chartTitle += amp;
+    }
+    chartTitle += routesList[chart.stopQueries[i].r];
+  }
+
+  updateTitle(chartTitle);
+
+  getMultiStops(chart.stopQueries, function(xml){
+    parseAndRender(xml, chart.vis);
     setTimeout(function(){
       d3methods.ripple(chart.vis);
     }, 500);
   });
 
   chart.timer = setInterval(function(){
-    getMultiStops(chart.queryStop, parseAndRender);
+    getMultiStops(chart.stopQueries, function(xml){
+      parseAndRender(xml, chart.vis);
+    });
   }, 14500);
 };
-
 
 var d3methods = {
 
@@ -150,6 +167,7 @@ var d3methods = {
     var arcWidth = Math.floor(arcMin/3.75);
     var arcPad = Math.ceil(arcWidth*0.1);
     var selectionColor = d3methods._selectionColor;
+    var highlightColor = d3methods._highlightColor;
 
     var colorScale = d3methods._colorScaleMaker( d3.max(dataset, function(d) {
       return parseInt(d.seconds, 10);
@@ -199,17 +217,14 @@ var d3methods = {
         });
 
       // update for arcs
-    gArc.select("path.arc-path")
-        .transition()
+    gArc.select("path.arc-path").transition()
         .duration(transitionTime)
-        .attr("fill", function(d){
-          if(d3.select(this).attr("fill")===selectionColor) {
-            centerTextData = [d3.select(this).datum()];
-            updateCenter(centerTextData);
+        .attr("fill", function(d, i){
+          if(this.__highlight__) {
+            centerTextData = [d];
             return selectionColor;
-          } else {
-            return colorScale(d.seconds);
           }
+          return colorScale(d.seconds);
         })
         .attr("d", arc);
 
@@ -218,7 +233,11 @@ var d3methods = {
         .append("svg:path")
         .attr("class", 'arc-path')
         .attr("fill", function(d, i){
-          return (i===0) ? selectionColor: colorScale(d.seconds);
+          if(i===0) {
+            this.__highlight__ = true;
+            return selectionColor;
+          }
+          return colorScale(d.seconds);
         })
         .attr("d", arc);
 
@@ -229,12 +248,30 @@ var d3methods = {
 
           _(d3.selectAll("path")[0]).each(function(arcPath){
             var d3arc = d3.select(arcPath);
+            delete arcPath["__highlight__"];
             d3arc.attr("fill", colorScale(d3arc.datum().seconds));
           });
 
-          d3selected.attr("fill", selectionColor);
+          this.__highlight__ = true;
+
+          var blender = d3.interpolate(highlightColor, colorScale(d3selected.datum().seconds));
+
+          d3selected.transition()
+              .duration(1000)
+              .attr("fill", highlightColor)
+              .each("end", function(){
+                d3selected.transition()
+                    .duration(600)
+                    .attr("fill", blender(0.5))
+                    .each("end", function(){
+                      d3selected.transition()
+                          .duration(1000)
+                          .attr("fill", selectionColor);
+                    });
+              });
+
           centerTextData = [d];
-          $('.route_title').text(routesList[centerTextData[0].routeTag]);
+          updateTitle(routesList[centerTextData[0].routeTag]);
           updateCenter(centerTextData);
 
           //console.log(d.routeTag +': '+ d.seconds);

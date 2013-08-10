@@ -12,7 +12,7 @@
     var stopsQuery = 'http://webservices.nextbus.com/service/publicXMLFeed?command=predictionsForMultiStops&a=sf-muni';
 
     _(stopsArray).each(function(stop) {
-      stopsQuery += '&stops='+ stop[r] +'|'+ stop[s];
+      stopsQuery += '&stops='+ stop.r +'|'+ stop.s;
     });
 
     $.get(stopsQuery, function(xml){
@@ -33,13 +33,12 @@
         'dirTag': dirTag,
         'stops' : []
       };
-      $this.find("stop").each(function(indx, stop){
+      $this.find("stop").each(function(indx, stop) {
         directions[dirTag].stops.push($(stop).attr("tag"));
       });
     });
 
     $route = $(xml).find("body > route");
-
 
     var stopsInfo = {
       routeTag: $route.attr("tag"),
@@ -47,7 +46,7 @@
       color: $route.attr("color"),
       oppositeColor: $route.attr("oppositeColor")
     };
-    $(xml).find("body route > stop").each(function(){
+    $(xml).find("body route > stop").each(function() {
       var $this = $(this);
       var stopTag = $this.attr("tag");
       stopsInfo[stopTag] = {
@@ -66,7 +65,7 @@
   var parseXMLtimes = function(xml, callback) {
     var times = [];
     var rT = $(xml).find('predictions').attr('routeTag');
-    $(xml).find('prediction').each(function(){
+    $(xml).find('prediction').each(function() {
       $pre = $(this);
       var prediction = {
         routeTag: rT,
@@ -84,12 +83,12 @@
     //  http://webservices.nextbus.com/service/publicXMLFeed?command=predictionsForMultiStops&a=sf-muni&stops=5|5684&stops=38|5684&stops=38|5689
 var parseXMLmulti = function(xml, callback) {
     var times = [];
-    var predictions = $(xml).find('predictions').each(function(){
+    var predictions = $(xml).find('predictions').each(function() {
       var $prs = $(this);
       var routeTag = $prs.attr('routeTag');
       var stopTag = $prs.attr('stopTag');
 
-      $prs.find('predictions > direction > prediction').each(function(){
+      $prs.find('predictions > direction > prediction').each(function() {
         var $pr = $(this);
         var prediction = {
           routeTag: routeTag,
@@ -116,7 +115,7 @@ var parseXMLmulti = function(xml, callback) {
 
     var opt1 = '';
 
-    _(routes).each(function(route, key){
+    _(routes).each(function(route, key) {
 
       // if a route has more than two origins add a 'from' to clarify
       if (route.name === 'Inbound' && Object.keys(routes).length>2) {
