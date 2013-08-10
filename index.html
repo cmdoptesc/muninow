@@ -23,10 +23,11 @@
 
     <div class="container">
       <h1>myMuni</h1>
+      <div class="row">
       <form id="RouteForm" class="form-horizontal">
           <p>
             <select id="RouteSelector" class="form-control input-sm">
-              <option value="null">Please select your Muni line..</option>
+              <option value="-1">Please select your Muni line..</option>
             </select>
           </p>
           <p>
@@ -40,8 +41,9 @@
           </p>
           <button type="button" class="btn btn-info btn-mini" id="AddRouteButton">Add Route</button>
       </form>
-      <div id="AdditionalInfo"></div>
-      <div id="ChartArea"></div>
+      </div>
+      <div id="AdditionalInfo" class="row"><div id="UrlDiv"></div></div>
+      <div id="ChartArea" style="max-height: 600"></div>
     </div>
 
     <script src="js/mymuni-api-forms.js"></script>

@@ -1,36 +1,70 @@
+
+
   // returns a function that stores stops & routes to be used for a multiple stop query
 var queryStorageMaker = function() {
   var memo = {};
 
   return function(stop, route, del) {
     if( stop && route ) {
-      if(del === 'true') { delete memo[route]; }
-      else {
-        memo[route] = {
-          r: route,
-          s: stop
-        };
+      var query = {
+        r: route,
+        s: stop
+      };
+      if(checkQuery(query)) {
+        if(del === 'true') { delete memo[route]; }
+        else {
+          memo[route] = query;
+        }
       }
     }
 
-    var query = [];
+    var queries = [];
     for(var key in memo) {
-      query.push(memo[key]);
+      queries.push(memo[key]);
     }
-
-    return query;
+    return queries;
   };
+};
+
+  // converts the queries array to a serialised parameter for bookmarking
+var serialiseQueries = function(queries) {
+  var params = {};
+  for(var i=0; i<queries.length; i++) {
+    params[i] = queries[i];
+  }
+  return $.param(params);
+};
+
+  // deserialised the parameter and checks them, returning an array of sanitised queries
+var deserialiseParams = function(params) {
+  var deserialised = $.deparam(params);
+  var i = 0, queries = [];
+  console.log(deserialised);
+  while(deserialised[i]) {
+    console.log(deserialised[i]);
+    if(checkQuery(deserialised[i])) { queries.push(deserialised[i]); }
+    i++;
+  }
+  return queries;
+};
+
+  // checks to see if the query has a valid bus line and a stop number of four digits
+  //  four digits does *NOT* mean the stop number is necessarily valid
+var checkQuery = function(pre) {
+  var validRoutes = routesInfo.routesList;
+  var regex = /\b\d{4}\b/;
+  return (typeof validRoutes[pre.r] === 'undefined' || !regex.test(pre.s)) ? false : true;
 };
 
 var queriesToStop = queryStorageMaker();
 var queriesToDest = queryStorageMaker();
 
-var makeChart = function(stop, route) {
+var makeChart = function(stopTag, routeTag) {
   var chart = {};
 
   $chartArea = $("#ChartArea");
 
-  $chartArea.html('<h2 class="route-title">'+ routesInfo.routesList[route] + '</h2>');
+  $chartArea.html('<h2 class="route-title">'+ routesInfo.routesList[routeTag] + '</h2>');
   $chartArea.append('<div class="chart-div"></div>');
 
   chart.div = $chartArea.children().last();
@@ -40,8 +74,8 @@ var makeChart = function(stop, route) {
 
   $("#AdditionalInfo").text("Additional Muni lines may be tracked by re-using the form above.");
 
-  updateTitle(routesInfo.routesList[route]);
-  updateChart(stop, route, chart);
+  updateTitle(routesInfo.routesList[routeTag]);
+  updateChart(stopTag, routeTag, chart);
 
   return chart;
 };
@@ -62,15 +96,32 @@ var parseAndRender = function(xml, vis) {
   d3methods.render(times, vis);
 };
 
-var updateChart = function(stop, route, chart) {
+var updateChart = function(stopTag, routeTag, chart) {
   if(chart.timer) { window.clearInterval(chart.timer); }
   $(chart.vis[0]).empty();
   (chart.vis).append("svg:g").attr("class", 'center-group');
 
-  var dest = $("#destSelector").val();
+  var dest = $("#DestSelector").val();
+  var $routeSel = $("#RouteSelector");
 
-  chart.stopQueries = queriesToStop(stop, route);
-  chart.destQueries = queriesToDest(dest, route);
+  // if($routeSel.val() === '-1') {
+  //   $routeSel.val(routeTag);
+  //   getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
+  //     routesInfo[routeTag] = parseXMLstops(xml);
+  //     displayDirections(routesInfo[routeTag].stopsInfo, routesInfo[routeTag].directions);
+
+  //     _(routesInfo[])
+  //   });
+  // }
+
+
+  chart.stopQueries = queriesToStop(stopTag, routeTag);
+  chart.destQueries = queriesToDest(dest, routeTag);
+
+  if(chart.stopQueries.length<1) {
+    console.log('Invalid query.');
+    return false;
+  }
 
   var chartTitle = '';
   var amp = ' & ';
@@ -158,6 +209,8 @@ var d3methods = {
     // constants
     var w = $(vis[0]).width();
     var h = $(vis[0]).height();
+    console.log("w", $(vis[0]).width());
+    console.log("h", $(vis[0]).height());
     var smlr = (w<h) ? w : h;
 
     var cX = Math.round(w/2);
