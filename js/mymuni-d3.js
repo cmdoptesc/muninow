@@ -147,82 +147,29 @@ var sortAndRender = function(predictions, vis) {
   d3methods.render(times, vis);
 };
 
-  // combines predictions for the sake of predicting arrival to destination
-var combinePredictions = function(predictions, stopQueries, destQueries) {
-    // uses a hash in order to pair the stop and destination times by the vehicle number.
-    //  late at night, nextbus might return the a vehicle's second departure time after it's roundtrip run
-    //  (e.g. leaving here, there, leaving here again), so seconds are stored as arrays.
-    //  unfortunately, it makes for the ugly loops later below
 
-    /*
-      Hash Hierarchy = {
-        routeTag: {
-          vehicle: {
-            stop: [seconds, seconds]
-          }
-        }
-      }
-    */
-
-  var prsHash = {};
-  _(predictions).each(function(prs) {
-    if(!prsHash[prs.routeTag]) { prsHash[prs.routeTag] = {}; }
-    if(!prsHash[prs.routeTag][prs.vehicle]) { prsHash[prs.routeTag][prs.vehicle] = {}; }
-    if(prsHash[prs.routeTag][prs.vehicle][prs.stopTag]) { prsHash[prs.routeTag][prs.vehicle][prs.stopTag].push(prs.seconds); }
-    if(!prsHash[prs.routeTag][prs.vehicle][prs.stopTag]) { prsHash[prs.routeTag][prs.vehicle][prs.stopTag] = [prs.seconds]; }
-  });
-
-    // there are many loops here, at 4am, they seem necessary..
-    //  most loops will be very short, especially stopTimes and destTimes, which will be one iteration
-    //  nearly all the time.
-  var combined = [];
-  for(var i=0; i<stopQueries.length; i++) {
-    var query = stopQueries[i];
-    for(var busNum in prsHash[query.r]) {
-      if(prsHash[query.r][busNum][query.s]) {
-        var stopTimes = prsHash[query.r][busNum][query.s];
-        for(var j=0; j<stopTimes.length; j++) {
-          var pr = {
-            routeTag: query.r,
-            stopTag: query.s,
-            seconds: stopTimes[j],
-            vehicle: busNum
-          };
-
-          if(destQueries[i] && prsHash[query.r][busNum][destQueries[i].s]) {
-            var destTimes = prsHash[query.r][busNum][destQueries[i].s];
-            pr.destTag = destQueries[i].s;
-
-            for(var k=j; k<destTimes.length; k++) {
-              if(parseInt(destTimes[k], 10) > parseInt(pr.seconds, 10)) {
-                pr.destSeconds = destTimes[k];
-                break;
-              }
-            }
-          }
-          combined.push(pr);
-        }
-      }
-    }
-  }
-  return combined;
-};
 
 var updateChartView = function(chart) {
   if(chart.timer) { window.clearInterval(chart.timer); }
   $(chart.d3vis[0]).empty();
   (chart.d3vis).append("svg:g").attr("class", 'center-group');
 
+  var stopQueries = chart.stopQueries;
+      destQueries = chart.destQueries;
+
   var bookmarkableUrl = window.location.href.split('?')[0] + '?' + serialiseQueries(chart.stopQueries);
   var info = Handlebars.compile('<a class="bookmarkable" href="{{url}}">Bookmarkable URL</a> - Additional Muni lines may be tracked by re-using the form above.');
 
-  updateTitle(combineTitles(chart.stopQueries));
+  updateTitle(combineTitles(stopQueries));
   $("#AdditionalInfo").html(info({ url: bookmarkableUrl }));
 
-  var predictions, combined;
-  getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
-    predictions = parseXMLmulti(xml);
-    combined = combinePredictions(predictions, chart.stopQueries, chart.destQueries);
+  var combined;
+  getMultiStops(stopQueries, destQueries, function(xml){
+    combined = combinePredictions(hashXMLmulti(xml), stopQueries, destQueries);
+    
+
+
+    //debugger;
 
     sortAndRender(combined, chart.d3vis);
     setTimeout(function(){
@@ -232,7 +179,7 @@ var updateChartView = function(chart) {
 
   chart.timer = setInterval(function(){
     getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
-      combined = combinePredictions(parseXMLmulti(xml), chart.stopQueries, chart.destQueries);
+      combined = combinePredictions(hashXMLmulti(xml), stopQueries, destQueries);
       sortAndRender(combined, chart.d3vis);
     });
   }, 14500);
@@ -394,7 +341,6 @@ var d3methods = {
         })
         .attr("d", arc);
 
-      // moved event handler from enter() as there were closure issues with referencing old dataset[0]
     d3.selectAll("path.arc-path")
       .on("click", function(d, i){
           var d3selected = d3.select(this);
