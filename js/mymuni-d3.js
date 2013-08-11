@@ -135,10 +135,9 @@ var updateTitle = function(title) {
 
   // helper function for views
 var getSixSoonest = function(times) {
-  var sorted = _.sortBy(times, function(time){
+  return _.sortBy(times, function(time){
     return parseInt(time.seconds, 10);
   });
-  return (sorted.length>6) ? sorted.slice(0,6) : sorted;
 };
 
   // helper function for views
@@ -166,10 +165,6 @@ var updateChartView = function(chart) {
   var combined;
   getMultiStops(stopQueries, destQueries, function(xml){
     combined = combinePredictions(hashXMLmulti(xml), stopQueries, destQueries);
-    
-
-
-    //debugger;
 
     sortAndRender(combined, chart.d3vis);
     setTimeout(function(){
@@ -242,6 +237,10 @@ var d3methods = {
 
 
   render: function(dataset, vis) {
+    dataset = _.filter(dataset, function(prediction){
+      return (prediction.seconds > 0) ? 1 : 0;
+    });
+
     // constants
     var w = $(vis[0]).width();
     var h = $(vis[0]).height();

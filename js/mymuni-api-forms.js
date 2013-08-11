@@ -189,18 +189,25 @@
     var pre;
     var i, j, k, vehicle;
 
+    var mkPrediction = function(routeTag, vehicle, timeInfo) {
+      var prediction = {
+        routeTag: routeTag,
+        vehicle: vehicle
+      };
+      _.extend(prediction, timeInfo);
+      return prediction;
+    };
+
     for(i=0; i<stopQueries.length; i++) {
       query = stopQueries[i];
       for(vehicle in prsHash[query.r]) {
         if(prsHash[query.r][vehicle][query.s]) {
           stopTimes = prsHash[query.r][vehicle][query.s];
           for(j=0; j<stopTimes.length; j++) {
-            pre = {
-              routeTag: query.r,
+            pre = mkPrediction(query.r, vehicle, {
               stopTag: query.s,
-              seconds: parseInt(stopTimes[j], 10),
-              vehicle: vehicle
-            };
+              seconds: parseInt(stopTimes[j], 10)
+            });
 
             if(destQueries[i] && prsHash[query.r][vehicle][destQueries[i].s]) {
               destTimes = prsHash[query.r][vehicle][destQueries[i].s];
@@ -208,7 +215,7 @@
 
               for(k=j; k<destTimes.length; k++) {
                 if(parseInt(destTimes[k], 10) > parseInt(pre.seconds, 10)) {
-                  pre.secondsTotal = parseInt(destTimes[k], 10) - pre.seconds;
+                  pre.secondsTotal = parseInt(destTimes[k], 10);
                   pre.destSeconds = pre.secondsTotal - pre.seconds;
                   break;
                 }
@@ -216,9 +223,21 @@
             }
             combined.push(pre);
           }
+        } else if(destQueries[i] && prsHash[query.r][vehicle][destQueries[i].s]) {
+            destTimes = prsHash[query.r][vehicle][destQueries[i].s];
+
+            for(k=0; k<destTimes.length; k++) {
+              var destInfo = {
+                destTag: destQueries[i].s,
+                destSeconds: parseInt(destTimes[k], 10),
+                seconds: -1
+              };
+              pre = mkPrediction(destQueries[i].r, vehicle, destInfo);
+              combined.push(pre);
+            }
+          }
         }
       }
-    }
     return combined;
   };
 
