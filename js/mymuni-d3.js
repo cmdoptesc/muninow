@@ -158,18 +158,63 @@ var updateChartView = function(chart) {
   updateTitle(combineTitles(chart.stopQueries));
   $("#AdditionalInfo").html(info({ url: bookmarkableUrl }));
 
+  var predictions, combined = [];
   getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
-    parseAndRender(xml, chart.d3vis);
-    setTimeout(function(){
-      d3methods.ripple(chart.d3vis);
-    }, 500);
+    var predictions = parseXMLmulti(xml);
+
+    var prsHash = {};
+    _(predictions).each(function(prs) {
+      if(!prsHash[prs.routeTag]) { prsHash[prs.routeTag] = {}; }
+      if(!prsHash[prs.routeTag][prs.vehicle]) { prsHash[prs.routeTag][prs.vehicle] = {}; }
+      if(prsHash[prs.routeTag][prs.vehicle][prs.stopTag]) { prsHash[prs.routeTag][prs.vehicle][prs.stopTag].push(prs.seconds); }
+      if(!prsHash[prs.routeTag][prs.vehicle][prs.stopTag]) { prsHash[prs.routeTag][prs.vehicle][prs.stopTag] = [prs.seconds]; }
+    });
+
+    var newPrs = [];
+    var stopQueries = chart.stopQueries;
+    var destQueries = chart.destQueries;
+    for(var i=0; i<stopQueries.length; i++) {
+      var query = stopQueries[i];
+      for(var busNum in prsHash[query.r]) {
+        if(prsHash[query.r][busNum][query.s]) {
+          var stopTimes = prsHash[query.r][busNum][query.s];
+          for(var j=0; j<stopTimes.length; j++) {
+            var pr = {
+              routeTag: query.r,
+              stopTag: query.s,
+              seconds: stopTimes[j],
+              vehicle: busNum
+            };
+
+            if(destQueries[i] && prsHash[query.r][busNum][destQueries[i].s]) {
+              var destTimes = prsHash[query.r][busNum][destQueries[i].s];
+              pr.destTag = destQueries[i].s;
+
+              for(var k=j; k<destTimes.length; k++) {
+                if(parseInt(destTimes[k], 10) > parseInt(pr.seconds, 10)) {
+                  pr.destSeconds = destTimes[k];
+                  break;
+                }
+              }
+            }
+            newPrs.push(pr);
+          }
+        }
+      }
+    }
+    debugger;
+
+    // parseAndRender(xml, chart.d3vis);
+    // setTimeout(function(){
+    //   d3methods.ripple(chart.d3vis);
+    // }, 500);
   });
 
-  chart.timer = setInterval(function(){
-    getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
-      parseAndRender(xml, chart.d3vis);
-    });
-  }, 14500);
+  // chart.timer = setInterval(function(){
+  //   getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
+  //     parseAndRender(xml, chart.d3vis);
+  //   });
+  // }, 14500);
 };
 
 var d3methods = {
