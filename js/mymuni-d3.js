@@ -54,72 +54,68 @@ var checkQuery = function(pre) {
   return (typeof validRoutes[pre.r] === 'undefined' || !regex.test(pre.s)) ? false : true;
 };
 
-var queriesToStop = queryStorageMaker();
-var queriesToDest = queryStorageMaker();
+
 
 var makeChart = function(stopTag, routeTag) {
   var chart = {};
+  updateChart(stopTag, routeTag, chart);
+  return chart;
+};
 
+var makeChartView = function(chart) {
   $chartArea = $("#ChartArea");
 
-  $chartArea.html('<h2 class="route-title">'+ routesInfo.routesList[routeTag] + '</h2>');
+  $chartArea.html('<h2 class="route-title"></h2>');
   $chartArea.append('<div class="chart-div"></div>');
 
   chart.div = $chartArea.children().last();
 
-  chart.vis = d3.select(chart.div[0]).append("svg:svg")
+  chart.d3vis = d3.select(chart.div[0]).append("svg:svg")
                 .style('border', '1px solid rgba(153,153,153, 0.5)');
 
-  updateTitle(routesInfo.routesList[routeTag]);
-  updateChart(stopTag, routeTag, chart);
+  updateChartView(chart);
+};
+
+var _queriesToStop = queryStorageMaker();
+var _queriesToDest = queryStorageMaker();
+
+var updateChart = function(stopTag, routeTag, chart) {
+  var destTag = $("#DestSelector").val();
+
+  chart.stopQueries = _queriesToStop(stopTag, routeTag);
+  chart.destQueries = _queriesToDest(destTag, routeTag);
 
   return chart;
 };
 
-var updateTitle = function(title) {
-  return $("#ChartArea .route-title").text(title);
-};
-
-var getSixSoonest = function(times) {
-  var sorted = _.sortBy(times, function(time){
-    return parseInt(time.seconds, 10);
-  });
-  return (sorted.length>6) ? sorted.slice(0,6) : sorted;
-};
-
-var parseAndRender = function(xml, vis) {
-  var times = getSixSoonest(parseXMLmulti(xml));
-  d3methods.render(times, vis);
-};
-
-var updateForm = function(stopTag, routeTag) {
+var updateFormView = function(stopTag, routeTag, callback) {
   var $routeSel = $("#RouteSelector");
   $routeSel.val(routeTag);
-  getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
-    routesInfo[routeTag] = parseXMLstops(xml);
 
-    var dirTag;
-    stopTag += '';    // stopTag should be a string, but if it isn't, convert it
-    _(routesInfo[routeTag].directions).each(function(dir){
-      for(var i=0; i<dir.stops.length; i++) {
-        if(dir.stops[i] === stopTag) {
-          dirTag = dir.dirTag;
-        }
+  var dirTag;
+  stopTag += '';    // stopTag should be a string, but if it isn't, convert it
+  _(routesInfo[routeTag].directions).each(function(dir){
+    for(var i=0; i<dir.stops.length; i++) {
+      if(dir.stops[i] === stopTag) {
+        dirTag = dir.dirTag;
       }
-    });
-
-    displayDirections(routesInfo[routeTag].stopsInfo, routesInfo[routeTag].directions, dirTag);
-
-    var $dirSel = $("#DirectionSelector");
-    $dirSel.val(dirTag);
-    $dirSel.change();
-
-    var $stopSel = $("#StopSelector");
-    $stopSel.val(stopTag);
-    $stopSel.change();
+    }
   });
+
+  displayDirections(routesInfo[routeTag].stopsInfo, routesInfo[routeTag].directions, dirTag);
+
+  var $dirSel = $("#DirectionSelector");
+  $dirSel.val(dirTag);
+  $dirSel.change();
+
+  var $stopSel = $("#StopSelector");
+  $stopSel.val(stopTag);
+  $stopSel.change();
+
+  if(callback) { callback(stopTag, routeTag); }
 };
 
+  // helper function for views
 var combineTitles = function(queries) {
   var title = '';
 
@@ -132,44 +128,48 @@ var combineTitles = function(queries) {
   return title;
 };
 
-var updateChart = function(stopTag, routeTag, chart) {
+  // helper function for views
+var updateTitle = function(title) {
+  return $("#ChartArea .route-title").text(title);
+};
+
+  // helper function for views
+var getSixSoonest = function(times) {
+  var sorted = _.sortBy(times, function(time){
+    return parseInt(time.seconds, 10);
+  });
+  return (sorted.length>6) ? sorted.slice(0,6) : sorted;
+};
+
+  // helper function for views
+var parseAndRender = function(xml, vis) {
+  var times = getSixSoonest(parseXMLmulti(xml));
+  d3methods.render(times, vis);
+};
+
+var updateChartView = function(chart) {
   if(chart.timer) { window.clearInterval(chart.timer); }
-  $(chart.vis[0]).empty();
-  (chart.vis).append("svg:g").attr("class", 'center-group');
-
-  var destTag = $("#DestSelector").val();
-
-  chart.stopQueries = queriesToStop(stopTag, routeTag);
-  chart.destQueries = queriesToDest(destTag, routeTag);
-
-  if($("#RouteSelector").val() === '-1') {
-    updateForm(stopTag, routeTag);
-  }
-
-  if(chart.stopQueries.length<1) {
-    console.log('Invalid query.');
-    return false;
-  }
+  $(chart.d3vis[0]).empty();
+  (chart.d3vis).append("svg:g").attr("class", 'center-group');
 
   var bookmarkableUrl = window.location.href.split('?')[0] + '?' + serialiseQueries(chart.stopQueries);
+  var info = Handlebars.compile('<a class="bookmarkable" href="{{url}}">Bookmarkable URL</a> - Additional Muni lines may be tracked by re-using the form above.');
 
   updateTitle(combineTitles(chart.stopQueries));
-  $("#AdditionalInfo").html('Additional Muni lines may be tracked by re-using the form above. <a href="'+ bookmarkableUrl +'">Bookmarkable URL</a>');
+  $("#AdditionalInfo").html(info({ url: bookmarkableUrl }));
 
   getMultiStops(chart.stopQueries, function(xml){
-    parseAndRender(xml, chart.vis);
+    parseAndRender(xml, chart.d3vis);
     setTimeout(function(){
-      d3methods.ripple(chart.vis);
+      d3methods.ripple(chart.d3vis);
     }, 500);
   });
 
   chart.timer = setInterval(function(){
     getMultiStops(chart.stopQueries, function(xml){
-      parseAndRender(xml, chart.vis);
+      parseAndRender(xml, chart.d3vis);
     });
   }, 14500);
-
-  return chart;
 };
 
 var d3methods = {
@@ -232,15 +232,15 @@ var d3methods = {
     // constants
     var w = $(vis[0]).width();
     var h = $(vis[0]).height();
+    h = (h < w) ? h : w;
     console.log("w", $(vis[0]).width());
     console.log("h", $(vis[0]).height());
-    var smlr = (w<h) ? w : h;
 
     var cX = Math.round(w/2);
-    var cY = ((h/2) > w) ? Math.floor(h/3) : Math.floor(h/2);
+    var cY = Math.floor(h/2);
 
     var pi = Math.PI;
-    var arcMin = Math.floor(smlr*0.15);
+    var arcMin = Math.floor(h*0.15);
     var arcWidth = Math.floor(arcMin/3.75);
     var arcPad = Math.ceil(arcWidth*0.1);
     var highlightColor = d3methods._highlightColor;

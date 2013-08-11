@@ -103,15 +103,14 @@ var parseXMLmulti = function(xml, callback) {
     return callback ? callback(predictions) : predictions;
   };
 
-  var routeOption = Handlebars.compile('<option value="{{value}}">{{title}}{{#if from}} from {{from}}{{/if}}</option>');
-  var stopOption = Handlebars.compile('<option value="{{value}}">{{title}}</option>');
-
-
     // dirTag is optional. if provided, will set drop-down to the specified direction
   var displayDirections = function(stopsInfo, routes, dirTag) {
     var $dirSel = $("#DirectionSelector");
     $dirSel.empty();
     $("#stopSelector").empty();
+
+    var routeOption = Handlebars.compile('<option value="{{value}}">{{title}}{{#if from}} from {{from}}{{/if}}</option>');
+    var stopOption = Handlebars.compile('<option value="{{value}}">{{title}}</option>');
 
     var opt1 = '';
 
@@ -129,6 +128,8 @@ var parseXMLmulti = function(xml, callback) {
     dirTag ? $dirSel.val(dirTag) : dirTag = $dirSel.val();
     displayStops(stopsInfo, routes, dirTag);
   };
+
+  var stopOption = Handlebars.compile('<option value="{{value}}">{{title}}</option>');
 
     // stopTag is optional. if provided will set drop-down to specified stop
   var displayStops = function(stopsInfo, routes, dirTag, stopTag) {

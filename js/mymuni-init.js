@@ -37,8 +37,10 @@ $(function() {
     var stopTag = $("#StopSelector").val();
     if(charts[0]) {
       updateChart(stopTag, routeTag, charts[0]);
+      updateChartView(charts[0]);
     } else {
       charts.push(makeChart(stopTag, routeTag));
+      makeChartView(charts[0]);
     }
   });
 
@@ -131,14 +133,30 @@ $(function() {
     routesInfo.routesList[route[0]] = route[1];
   });
 
+  var recursiveAsyncGoodness = function(queries, indx) {
+    indx = indx || 0;
+    if(queries && queries.length > 0) {
+      if(indx < queries.length) {
+        var stopTag = queries[indx].s,
+            routeTag = queries[indx].r;
+
+        getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
+          routesInfo[routeTag] = parseXMLstops(xml);
+          (indx===0) ? charts.push(makeChart(stopTag, routeTag)) : updateChart(stopTag, routeTag, charts[0]);
+          recursiveAsyncGoodness(queries, indx+1);
+        });
+      } else {
+
+        makeChartView(charts[0]);
+        updateFormView(queries[0].s, queries[0].r);
+      }
+    }
+  };
+
   var params = window.location.search;
   if(params.length>0) {
     var queries = deserialiseParams(params.substr(1));
-
-    charts.push(makeChart(queries[0].s, queries[0].r));
-    for(var i=1; i<queries.length; i++) {
-      updateChart(queries[i].s, queries[i].r, charts[0]);
-    }
+    recursiveAsyncGoodness(queries);
   }
 
 });
