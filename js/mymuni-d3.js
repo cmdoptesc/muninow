@@ -142,8 +142,8 @@ var getSixSoonest = function(times) {
 };
 
   // helper function for views
-var parseAndRender = function(xml, vis) {
-  var times = getSixSoonest(parseXMLmulti(xml));
+var sortAndRender = function(predictions, vis) {
+  var times = getSixSoonest(predictions);
   d3methods.render(times, vis);
 };
 
@@ -224,19 +224,18 @@ var updateChartView = function(chart) {
     predictions = parseXMLmulti(xml);
     combined = combinePredictions(predictions, chart.stopQueries, chart.destQueries);
 
-    debugger;
-
-    // parseAndRender(xml, chart.d3vis);
-    // setTimeout(function(){
-    //   d3methods.ripple(chart.d3vis);
-    // }, 500);
+    sortAndRender(combined, chart.d3vis);
+    setTimeout(function(){
+      d3methods.ripple(chart.d3vis);
+    }, 500);
   });
 
-  // chart.timer = setInterval(function(){
-  //   getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
-  //     parseAndRender(xml, chart.d3vis);
-  //   });
-  // }, 14500);
+  chart.timer = setInterval(function(){
+    getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
+      combined = combinePredictions(parseXMLmulti(xml), chart.stopQueries, chart.destQueries);
+      sortAndRender(combined, chart.d3vis);
+    });
+  }, 14500);
 };
 
 var d3methods = {
@@ -411,8 +410,6 @@ var d3methods = {
           d3selected.transition()
               .duration(300)
               .attr("fill", highlightColor);
-
-              console.log(d);
 
           centerTextData = [d];
 
