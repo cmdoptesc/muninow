@@ -161,6 +161,9 @@ $(function() {
 
 });
 
+
+// deparam - thanks Ben Alman!
+// https://gist.github.com/cowboy/1025817
 (function($) {
   // Creating an internal undef value is safer than using undefined, in case it
   // was ever overwritten.
