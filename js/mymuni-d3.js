@@ -147,6 +147,67 @@ var parseAndRender = function(xml, vis) {
   d3methods.render(times, vis);
 };
 
+  // combines predictions for the sake of predicting arrival to destination
+var combinePredictions = function(predictions, stopQueries, destQueries) {
+    // uses a hash in order to pair the stop and destination times by the vehicle number.
+    //  late at night, nextbus might return the a vehicle's second departure time after it's roundtrip run
+    //  (e.g. leaving here, there, leaving here again), so seconds are stored as arrays.
+    //  unfortunately, it makes for the ugly loops later below
+
+    /*
+      Hash Hierarchy = {
+        routeTag: {
+          vehicle: {
+            stop: [seconds, seconds]
+          }
+        }
+      }
+    */
+
+  var prsHash = {};
+  _(predictions).each(function(prs) {
+    if(!prsHash[prs.routeTag]) { prsHash[prs.routeTag] = {}; }
+    if(!prsHash[prs.routeTag][prs.vehicle]) { prsHash[prs.routeTag][prs.vehicle] = {}; }
+    if(prsHash[prs.routeTag][prs.vehicle][prs.stopTag]) { prsHash[prs.routeTag][prs.vehicle][prs.stopTag].push(prs.seconds); }
+    if(!prsHash[prs.routeTag][prs.vehicle][prs.stopTag]) { prsHash[prs.routeTag][prs.vehicle][prs.stopTag] = [prs.seconds]; }
+  });
+
+    // there are many loops here, at 4am, they seem necessary..
+    //  most loops will be very short, especially stopTimes and destTimes, which will be one iteration
+    //  nearly all the time.
+  var combined = [];
+  for(var i=0; i<stopQueries.length; i++) {
+    var query = stopQueries[i];
+    for(var busNum in prsHash[query.r]) {
+      if(prsHash[query.r][busNum][query.s]) {
+        var stopTimes = prsHash[query.r][busNum][query.s];
+        for(var j=0; j<stopTimes.length; j++) {
+          var pr = {
+            routeTag: query.r,
+            stopTag: query.s,
+            seconds: stopTimes[j],
+            vehicle: busNum
+          };
+
+          if(destQueries[i] && prsHash[query.r][busNum][destQueries[i].s]) {
+            var destTimes = prsHash[query.r][busNum][destQueries[i].s];
+            pr.destTag = destQueries[i].s;
+
+            for(var k=j; k<destTimes.length; k++) {
+              if(parseInt(destTimes[k], 10) > parseInt(pr.seconds, 10)) {
+                pr.destSeconds = destTimes[k];
+                break;
+              }
+            }
+          }
+          combined.push(pr);
+        }
+      }
+    }
+  }
+  return combined;
+};
+
 var updateChartView = function(chart) {
   if(chart.timer) { window.clearInterval(chart.timer); }
   $(chart.d3vis[0]).empty();
@@ -158,50 +219,11 @@ var updateChartView = function(chart) {
   updateTitle(combineTitles(chart.stopQueries));
   $("#AdditionalInfo").html(info({ url: bookmarkableUrl }));
 
-  var predictions, combined = [];
+  var predictions, combined;
   getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
-    var predictions = parseXMLmulti(xml);
+    predictions = parseXMLmulti(xml);
+    combined = combinePredictions(predictions, chart.stopQueries, chart.destQueries);
 
-    var prsHash = {};
-    _(predictions).each(function(prs) {
-      if(!prsHash[prs.routeTag]) { prsHash[prs.routeTag] = {}; }
-      if(!prsHash[prs.routeTag][prs.vehicle]) { prsHash[prs.routeTag][prs.vehicle] = {}; }
-      if(prsHash[prs.routeTag][prs.vehicle][prs.stopTag]) { prsHash[prs.routeTag][prs.vehicle][prs.stopTag].push(prs.seconds); }
-      if(!prsHash[prs.routeTag][prs.vehicle][prs.stopTag]) { prsHash[prs.routeTag][prs.vehicle][prs.stopTag] = [prs.seconds]; }
-    });
-
-    var newPrs = [];
-    var stopQueries = chart.stopQueries;
-    var destQueries = chart.destQueries;
-    for(var i=0; i<stopQueries.length; i++) {
-      var query = stopQueries[i];
-      for(var busNum in prsHash[query.r]) {
-        if(prsHash[query.r][busNum][query.s]) {
-          var stopTimes = prsHash[query.r][busNum][query.s];
-          for(var j=0; j<stopTimes.length; j++) {
-            var pr = {
-              routeTag: query.r,
-              stopTag: query.s,
-              seconds: stopTimes[j],
-              vehicle: busNum
-            };
-
-            if(destQueries[i] && prsHash[query.r][busNum][destQueries[i].s]) {
-              var destTimes = prsHash[query.r][busNum][destQueries[i].s];
-              pr.destTag = destQueries[i].s;
-
-              for(var k=j; k<destTimes.length; k++) {
-                if(parseInt(destTimes[k], 10) > parseInt(pr.seconds, 10)) {
-                  pr.destSeconds = destTimes[k];
-                  break;
-                }
-              }
-            }
-            newPrs.push(pr);
-          }
-        }
-      }
-    }
     debugger;
 
     // parseAndRender(xml, chart.d3vis);
