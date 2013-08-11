@@ -8,16 +8,31 @@
 
     // needed a custom query function since the query URL reuses the "stops" key
     // stopsArray is an array of stop objects in the format: {r: route tag, s: stop tag}
-  var getMultiStops = function(stopsArray, callback) {
-    var stopsQuery = 'http://webservices.nextbus.com/service/publicXMLFeed?command=predictionsForMultiStops&a=sf-muni';
+  var getMultiStops = function(stopsArray, destsArray, callback) {
+    var baseQuery = 'http://webservices.nextbus.com/service/publicXMLFeed?command=predictionsForMultiStops&a=sf-muni';
 
-    _(stopsArray).each(function(stop) {
-      stopsQuery += '&stops='+ stop.r +'|'+ stop.s;
-    });
+    var args = Array.prototype.slice.call(arguments);
 
-    $.get(stopsQuery, function(xml){
-        callback.call(this, xml);
+    if(_.isArray(args[1]) && _.isFunction(args[2])) {
+      destsArray = args[1];
+      callback = args[2];
+    } else if(_.isFunction(args[1])) {
+      destsArray = undefined;
+      callback = args[1];
+    }
+
+    var query = buildQuery(baseQuery, stopsArray, destsArray);
+    $.get(query, function(xml){
+      callback.call(this, xml);
     });
+  };
+
+  var buildQuery = function(baseQuery, stopsArray, destsArray) {
+    for(var i=0; i<stopsArray.length; i++) {
+      baseQuery += '&stops='+ stopsArray[i].r +'|'+ stopsArray[i].s;
+      if(destsArray) { baseQuery += '&stops='+ destsArray[i].r +'|'+ destsArray[i].s; }
+    }
+    return baseQuery;
   };
 
     // converting raw xml: http://webservices.nextbus.com/service/publicXMLFeed?command=routeConfig&a=sf-muni&r=J
@@ -88,7 +103,7 @@ var parseXMLmulti = function(xml, callback) {
       var routeTag = $prs.attr('routeTag');
       var stopTag = $prs.attr('stopTag');
 
-      $prs.find('predictions > direction > prediction').each(function() {
+      $prs.find('prediction').each(function() {
         var $pr = $(this);
         var pre = {
           routeTag: routeTag,

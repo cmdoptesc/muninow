@@ -158,7 +158,7 @@ var updateChartView = function(chart) {
   updateTitle(combineTitles(chart.stopQueries));
   $("#AdditionalInfo").html(info({ url: bookmarkableUrl }));
 
-  getMultiStops(chart.stopQueries, function(xml){
+  getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
     parseAndRender(xml, chart.d3vis);
     setTimeout(function(){
       d3methods.ripple(chart.d3vis);
@@ -166,7 +166,7 @@ var updateChartView = function(chart) {
   });
 
   chart.timer = setInterval(function(){
-    getMultiStops(chart.stopQueries, function(xml){
+    getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
       parseAndRender(xml, chart.d3vis);
     });
   }, 14500);
