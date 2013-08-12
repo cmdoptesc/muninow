@@ -190,6 +190,10 @@ var d3methods = {
     return ( sec%60 > fuzzy ) ? Math.ceil(sec/60) : Math.floor(sec/60);
   },
 
+  _secToRadians: function(sec) {
+    return Math.round(parseFloat((sec/60)*6 * (Math.PI/180)) * 10000)/10000;
+  },
+
   _colorScaleMaker: function(max) {
     return d3.scale.linear()
         .domain([0, max])
@@ -235,7 +239,6 @@ var d3methods = {
           });
   },
 
-
   render: function(dataset, vis) {
     dataset = _.filter(dataset, function(prediction){
       return (prediction.seconds > 0) ? 1 : 0;
@@ -251,7 +254,6 @@ var d3methods = {
     var cX = Math.round(w/2);
     var cY = Math.floor(h/2);
 
-    var pi = Math.PI;
     var arcMin = Math.floor(h*0.15);
     var arcWidth = Math.floor(arcMin/3.75);
     var arcPad = Math.ceil(arcWidth*0.1);
@@ -262,13 +264,13 @@ var d3methods = {
       return parseInt(d.seconds, 10);
     }) );
 
-    var updateCenter = function(newData) {
+    function updateCenter(newData) {
       d3centerText.data(newData).text(function(d){
         return d3methods._toMin(d.seconds);
       })
       .style("font-size", Math.floor(arcMin*1.44) + 'px')
       .attr("transform", 'translate(0,'+ parseInt(arcMin/2, 10) +')');
-    };
+    }
 
     var transitionTime = 3000;
 
@@ -289,7 +291,11 @@ var d3methods = {
       }
     }
 
-    gArc = gArc.data(dataset);
+    var key = function(d) {
+      return d.vehicle;
+    };
+
+    gArc = gArc.data(dataset, key);
     var centerTextData = [dataset[0]];
 
       // defining arc accessor
@@ -300,10 +306,28 @@ var d3methods = {
         .outerRadius(function(d, i) {
           return arcMin + (i+1)*(arcWidth);
         })
-        .startAngle(0 * (pi/180))
+        .startAngle(0)
         .endAngle(function(d) {
-          return Math.round(parseFloat((d.seconds/60)*6 * (pi/180)) * 10000, 10)/10000;
+          return d3methods._secToRadians(d.seconds);
         });
+
+    var arcDest = d3.svg.arc()
+      .innerRadius(function(d, i) {
+        return arcMin + i*(arcWidth) + arcPad;
+      })
+      .outerRadius(function(d, i) {
+        return arcMin + (i+1)*(arcWidth);
+      })
+      .startAngle(function(d) {
+        if(d.seconds < 0) {
+          return 0;
+        } else {
+          return d3methods._secToRadians(d.seconds + 15);
+        }
+      })
+      .endAngle(function(d) {
+        return d3methods._secToRadians(d.secondsTotal);
+      });
 
       // update for arcs
       //  loop below is to see if there is a highlighted arc
@@ -311,6 +335,15 @@ var d3methods = {
     gArc.select("path.arc-path").each(function(d){
       if(this.__highlight__) { hasHighlight = true; }
     });
+
+    function arcTween(a, indx) {
+      var inter = d3.interpolate(this._current, a);
+      this._current = a;
+      return function(t) {
+        console.log("blah");
+        return arc(inter(t), indx);
+      };
+    }
 
       // re-colors the arcs, if there is no highlighted arc (from above), highlight the first one
     gArc.select("path.arc-path").transition()
@@ -325,26 +358,50 @@ var d3methods = {
           }
           return colorScale(d.seconds);
         })
-        .attr("d", arc);
+        .attrTween("d", arcTween);
+
+    // gArc.select("path.arc-path").transition()
+    //     .duration(transitionTime)
+    //     .attr("fill", function(d, i){
+    //       if(!hasHighlight && i === 0) {
+    //         this.__highlight = true;
+    //       }
+    //       if(this.__highlight__) {
+    //         centerTextData = [d];
+    //         return highlightColor;
+    //       }
+    //       return colorScale(d.seconds);
+    //     })
+    //     .attrTween("d", arcTween);
 
       // enter for arcs
-    gArc.enter().append("svg:g").attr("class", 'arc-group')
+    var group = gArc.enter().append("svg:g").attr("class", 'arc-group')
         .append("svg:path")
-        .attr("class", 'arc-path')
-        .attr("fill", function(d, i){
-          if(i === 0) {
-            this.__highlight__ = true;
-            return highlightColor;
-          }
-          return colorScale(d.seconds);
-        })
-        .attr("d", arc);
+          .attr("class", 'arc-path')
+          .attr("fill", function(d, i){
+            if(i === 0) {
+              this.__highlight__ = true;
+              return highlightColor;
+            }
+            return colorScale(d.seconds);
+          })
+          .attr("d", arc)
+          .each(function(d, i){
+            this._current = d;
+            var indx = i;
+            d3.select(this.parentNode).append("svg:path")
+              .attr("class", 'dest-path')
+              .attr("fill", "blue")
+              .attr("d", function(d, i) {
+                return arcDest(d, indx);
+              });
+          });
 
     d3.selectAll("path.arc-path")
       .on("click", function(d, i){
           var d3selected = d3.select(this);
 
-          _(d3.selectAll("path")[0]).each(function(arcPath){
+          _(d3.selectAll("path.arc-path")[0]).each(function(arcPath){
             delete arcPath["__highlight__"];
 
             var d3arc = d3.select(arcPath);

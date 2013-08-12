@@ -211,10 +211,10 @@
 
             if(destQueries[i] && prsHash[query.r][vehicle][destQueries[i].s]) {
               destTimes = prsHash[query.r][vehicle][destQueries[i].s];
-              pre.destTag = destQueries[i].s;
 
               for(k=j; k<destTimes.length; k++) {
                 if(parseInt(destTimes[k], 10) > parseInt(pre.seconds, 10)) {
+                  pre.destTag = destQueries[i].s;
                   pre.secondsTotal = parseInt(destTimes[k], 10);
                   pre.destSeconds = pre.secondsTotal - pre.seconds;
                   break;
