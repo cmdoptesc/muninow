@@ -512,3 +512,13 @@ var d3methods = {
     updateCenter(centerTextData);
   }
 };
+
+var matchTime = function() {
+  var dt = new Date();
+  var deg = (dt.getMinutes()/60)*360;
+  d3.selectAll('g.arc-group').transition().duration(300).attr("transform", 'rotate(' + deg + ')');
+};
+
+var resetZero = function() {
+  d3.selectAll('g.arc-group').transition().duration(300).attr("transform", 'rotate(0)');
+};
