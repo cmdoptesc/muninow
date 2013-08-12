@@ -6,7 +6,7 @@
   stroke-width: 2px;
 }
 
-.arc-path {
+.arc-path, .dest-path {
   stroke: rgba(153, 153, 153, 0.10);
   stroke-width: 2px;
   cursor: pointer;
