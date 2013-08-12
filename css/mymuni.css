@@ -11,3 +11,15 @@
   stroke-width: 2px;
   cursor: pointer;
 }
+
+.highlighted {
+  fill: #fc7d47;
+}
+
+.highlighted2 {
+  fill: #deae8a;
+}
+
+.transition {
+  fill: #deae8a;
+}
