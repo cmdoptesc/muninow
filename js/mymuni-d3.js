@@ -329,21 +329,38 @@ var d3methods = {
         return d3methods._secToRadians(d.secondsTotal);
       });
 
+    function arcTween(a, indx) {
+      var end = {
+        index: indx,
+        seconds: a.seconds
+      };
+      var inter = d3.interpolateObject(this._current, end);
+      this._current = end;
+      return function(t) {
+        return arc(inter(t), indx);
+      };
+    }
+
+    function destTween(a) {
+      var indx = this._current.index;
+      var end = {
+        index: indx,
+        seconds: a.seconds,
+        secondsTotal: a.secondsTotal
+      };
+      var inter = d3.interpolateObject(this._current, end);
+      this._current = end;
+      return function(t) {
+        return arcDest(inter(t), indx);
+      };
+    }
+
       // update for arcs
       //  loop below is to see if there is a highlighted arc
     var hasHighlight = false;
     gArc.select("path.arc-path").each(function(d){
       if(this.__highlight__) { hasHighlight = true; }
     });
-
-    function arcTween(a, indx) {
-      var inter = d3.interpolate(this._current, a);
-      this._current = a;
-      return function(t) {
-        console.log("blah");
-        return arc(inter(t), indx);
-      };
-    }
 
       // re-colors the arcs, if there is no highlighted arc (from above), highlight the first one
     gArc.select("path.arc-path").transition()
@@ -358,21 +375,17 @@ var d3methods = {
           }
           return colorScale(d.seconds);
         })
-        .attrTween("d", arcTween);
-
-    // gArc.select("path.arc-path").transition()
-    //     .duration(transitionTime)
-    //     .attr("fill", function(d, i){
-    //       if(!hasHighlight && i === 0) {
-    //         this.__highlight = true;
-    //       }
-    //       if(this.__highlight__) {
-    //         centerTextData = [d];
-    //         return highlightColor;
-    //       }
-    //       return colorScale(d.seconds);
-    //     })
-    //     .attrTween("d", arcTween);
+        .attrTween("d", arcTween)
+        .each(function(d, i){
+          var indx = i;
+          if(this.nextSibling) {
+            var d3dest = d3.select(this.nextSibling);
+            d3dest.datum(d);
+            d3dest.transition()
+              .duration(transitionTime)
+              .attrTween("d", destTween);
+          }
+        });
 
       // enter for arcs
     var group = gArc.enter().append("svg:g").attr("class", 'arc-group')
@@ -387,14 +400,26 @@ var d3methods = {
           })
           .attr("d", arc)
           .each(function(d, i){
-            this._current = d;
-            var indx = i;
-            d3.select(this.parentNode).append("svg:path")
-              .attr("class", 'dest-path')
-              .attr("fill", "blue")
-              .attr("d", function(d, i) {
-                return arcDest(d, indx);
-              });
+            this._current = {
+                index: i,
+                seconds: d.seconds
+              };
+            if( d.secondsTotal && d.secondsTotal < 60*60 ) {
+              var indx = i;
+              d3.select(this.parentNode).append("svg:path")
+                .attr("class", 'dest-path')
+                .attr("fill", "blue")
+                .attr("d", function(d, i) {
+                  return arcDest(d, indx);
+                })
+                .each(function(d){
+                  this._current = {
+                    index: indx,
+                    seconds: d.seconds,
+                    secondsTotal: d.secondsTotal
+                  };
+                });
+            }
           });
 
     d3.selectAll("path.arc-path")
