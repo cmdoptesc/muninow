@@ -281,11 +281,14 @@ var d3methods = {
     var gArc = g.selectAll("g.arc-group");
     var d3centerText = g.selectAll(".center-time");
 
+    var b = d3.select(gArc.node());
+
       // checks to see if the past bus has rolled off, if so, delete the associated graphic
     if(gArc[0] && gArc[0][0]) {
       var pastBus = d3.select(gArc[0][0]).select("path.arc-path").datum();
       if( (pastBus.seconds<45) && (dataset[0].vehicle != pastBus.vehicle) ) {
-        transitionTime = 1000;
+        transitionTime = 3000;
+        //gArc[0][0].childNodes[0].remove();
         gArc[0][0].remove();
         gArc[0].splice(0,1);
       }
@@ -299,12 +302,15 @@ var d3methods = {
     var centerTextData = [dataset[0]];
 
       // defining arc accessor
+    var r;
     var arc = d3.svg.arc()
         .innerRadius(function(d, i) {
-          return arcMin + i*(arcWidth) + arcPad;
+          r = d.index || i;
+          return arcMin + r*(arcWidth) + arcPad;
         })
         .outerRadius(function(d, i) {
-          return arcMin + (i+1)*(arcWidth);
+          r = d.index || i;
+          return arcMin + (r+1)*(arcWidth);
         })
         .startAngle(0)
         .endAngle(function(d) {
@@ -313,10 +319,12 @@ var d3methods = {
 
     var arcDest = d3.svg.arc()
       .innerRadius(function(d, i) {
-        return arcMin + i*(arcWidth) + arcPad;
+        r = d.index || i;
+        return arcMin + r*(arcWidth) + arcPad;
       })
       .outerRadius(function(d, i) {
-        return arcMin + (i+1)*(arcWidth);
+        r = d.index || i;
+        return arcMin + (r+1)*(arcWidth);
       })
       .startAngle(function(d) {
         if(d.seconds < 0) {
@@ -341,8 +349,7 @@ var d3methods = {
       };
     }
 
-    function destTween(a) {
-      var indx = this._current.index;
+    function destTween(a, indx) {
       var end = {
         index: indx,
         seconds: a.seconds,
@@ -366,8 +373,9 @@ var d3methods = {
     gArc.select("path.arc-path").transition()
         .duration(transitionTime)
         .attr("fill", function(d, i){
+          console.log("index", i);
           if(!hasHighlight && i === 0) {
-            this.__highlight = true;
+            this.__highlight__ = true;
           }
           if(this.__highlight__) {
             centerTextData = [d];
@@ -375,22 +383,16 @@ var d3methods = {
           }
           return colorScale(d.seconds);
         })
-        .attrTween("d", arcTween)
-        .each(function(d, i){
-          var indx = i;
-          if(this.nextSibling) {
-            var d3dest = d3.select(this.nextSibling);
-            d3dest.datum(d);
-            d3dest.transition()
+        .attrTween("d", arcTween);
+
+    gArc.select("path.dest-path").transition()
               .duration(transitionTime)
               .attrTween("d", destTween);
-          }
-        });
 
       // enter for arcs
-    var group = gArc.enter().append("svg:g").attr("class", 'arc-group')
-        .append("svg:path")
-          .attr("class", 'arc-path')
+    var group = gArc.enter().append("svg:g").attr("class", 'arc-group');
+
+    group.append("svg:path").attr("class", 'arc-path')
           .attr("fill", function(d, i){
             if(i === 0) {
               this.__highlight__ = true;
@@ -403,11 +405,10 @@ var d3methods = {
             this._current = {
                 index: i,
                 seconds: d.seconds
-              };
+            };
             if( d.secondsTotal && d.secondsTotal < 60*60 ) {
               var indx = i;
-              d3.select(this.parentNode).append("svg:path")
-                .attr("class", 'dest-path')
+              d3.select(this.parentNode).append("svg:path").attr("class", 'dest-path')
                 .attr("fill", "blue")
                 .attr("d", function(d, i) {
                   return arcDest(d, indx);
@@ -434,9 +435,7 @@ var d3methods = {
           });
 
           this.__highlight__ = true;
-          d3selected.transition()
-              .duration(300)
-              .attr("fill", highlightColor);
+          d3selected.attr("fill", highlightColor);
 
           centerTextData = [d];
 
