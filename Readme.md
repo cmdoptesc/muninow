@@ -1,18 +1,12 @@
-myMuni
-======
+muniNow
+=======
 
-myMuni aims to be a better Nextbus by giving users the ability to see when the soonest Muni bus is arriving at a glance.
+muniNow aims to be a better Nextbus by giving users the ability to see when the soonest Muni bus is arriving at a glance.
 
-Live demo
----------
-http://bl.ocks.org/ferment/raw/6182765/
+Live demo at Bl.ocks
+--------------------
+http://bl.ocks.org/cmdoptesc/raw/6224455/
 
 Things to add
 -------------
-- predictions (had them in a previous version, will implement later)
-- nicer, cleaner interface
-
-Bug-List
---------
-- global variables
-- D3 arc tween works 85% of the time
+- initial selection is narrowed down by GPS location
