@@ -10,3 +10,4 @@ http://bl.ocks.org/cmdoptesc/raw/6224455/
 Things to add
 -------------
 - initial selection is narrowed down by GPS location
+- improved touchpad UI
