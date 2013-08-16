@@ -198,13 +198,13 @@ var d3methods = {
   _arcScaleMaker: function(max) {
     return d3.scale.linear()
         .domain([0, max])
-        .range(["rgb(227,227,209)", "rgb(185,218,197)"]);
+        .range(["rgb(185,218,197)", "rgb(233,237,220)"]);
   },
 
   _destScaleMaker: function(max) {
     return d3.scale.linear()
         .domain([0, max])
-        .range(["rgb(243,231,214)", "rgb(227,227,209)"]);
+        .range(["rgb(243,231,214)", "rgb(230,230,213)"]);
   },
 
   _resetColors: function(selector) {
@@ -222,8 +222,9 @@ var d3methods = {
     var d3centerText = vis.selectAll("text.center-time");
 
     var lastIndex = d3arcs[0].length-1;
+    var maxSeconds = parseInt(d3.select(d3arcs[0][lastIndex]).datum().seconds, 10);
 
-    var arcColorScale = d3methods._arcScaleMaker(60*60);
+    var arcColorScale = d3methods._arcScaleMaker(maxSeconds);
     var highlightColor = d3methods._highlightColor;
     var transitionColor = d3methods._transitionColor;
 
@@ -283,7 +284,9 @@ var d3methods = {
     var transitionColor = d3methods._transitionColor;
     var destColor = d3methods._destColor;
 
-    var arcColorScale = d3methods._arcScaleMaker(60*60);
+    var arcColorScale = d3methods._arcScaleMaker( d3.max(dataset, function(d) {
+      return parseInt(d.seconds, 10);
+    }) );
 
     var destColorScale = d3methods._destScaleMaker( d3.max(dataset, function(d) {
       return parseInt(d.secondsTotal, 10);
