@@ -49,9 +49,8 @@ var deserialiseParams = function(params) {
   // checks to see if the query has a valid bus line and a stop number of four digits
   //  four digits does *NOT* mean the stop number is necessarily valid
 var checkQuery = function(pre) {
-  var validRoutes = routesInfo.routesList;
   var regex = /\b\d{4}\b/;
-  return (typeof validRoutes[pre.r] === 'undefined' || !regex.test(pre.s)) ? false : true;
+  return (typeof nb.routesInfo[pre.r] === 'undefined' || !regex.test(pre.s)) ? false : true;
 };
 
 
@@ -94,7 +93,7 @@ var updateFormView = function(stopTag, routeTag, callback) {
 
   var dirTag;
   stopTag += '';    // stopTag should be a string, but if it isn't, convert it
-  _(routesInfo[routeTag].directions).each(function(dir){
+  _(nb.routesInfo[routeTag].directions).each(function(dir){
     for(var i=0; i<dir.stops.length; i++) {
       if(dir.stops[i] === stopTag) {
         dirTag = dir.dirTag;
@@ -102,7 +101,7 @@ var updateFormView = function(stopTag, routeTag, callback) {
     }
   });
 
-  displayDirections(routesInfo[routeTag].stopsInfo, routesInfo[routeTag].directions, dirTag);
+  displayDirections(nb.routesInfo[routeTag].stopsInfo, nb.routesInfo[routeTag].directions, dirTag);
 
   var $dirSel = $("#DirectionSelector");
   $dirSel.val(dirTag);
@@ -123,7 +122,7 @@ var combineTitles = function(queries) {
     if(i > 0) {
       title += ' & ';
     }
-    title += routesInfo.routesList[queries[i].r];
+    title += nb.routesInfo[queries[i].r].title;
   }
   return title;
 };
@@ -163,8 +162,8 @@ var updateChartView = function(chart) {
   $("#AdditionalInfo").html(info({ url: bookmarkableUrl }));
 
   var combined;
-  getMultiStops(stopQueries, destQueries, function(xml){
-    combined = combinePredictions(hashXMLmulti(xml), stopQueries, destQueries);
+  nb.getMultiStops(stopQueries, destQueries, function(xml){
+    combined = nb.combinePredictions(nb.hashXMLmulti(xml), stopQueries, destQueries);
 
     sortAndRender(combined, chart.d3vis);
     setTimeout(function(){
@@ -173,8 +172,8 @@ var updateChartView = function(chart) {
   });
 
   chart.timer = setInterval(function(){
-    getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
-      combined = combinePredictions(hashXMLmulti(xml), stopQueries, destQueries);
+    nb.getMultiStops(chart.stopQueries, chart.destQueries, function(xml){
+      combined = nb.combinePredictions(nb.hashXMLmulti(xml), stopQueries, destQueries);
       sortAndRender(combined, chart.d3vis);
     });
   }, 14500);
@@ -452,8 +451,8 @@ var d3methods = {
 
           centerTextData = [d];
 
-          var busTitle = routesInfo.routesList[d.routeTag];
-          var stopTitle = routesInfo[d.routeTag].stopsInfo[centerTextData[0].stopTag].title;
+          var busTitle = nb.routesInfo[d.routeTag].title;
+          var stopTitle = nb.routesInfo[d.routeTag].stopsInfo[centerTextData[0].stopTag].title;
 
           var minTitle = d3methods._toMin(d.seconds);
           if(minTitle > 0) {
@@ -480,8 +479,8 @@ var d3methods = {
           centerTextData = [{seconds: d.secondsTotal}];
 
           // var busTitle = routesInfo.routesList[d.routeTag];
-          var stopTitle = routesInfo[d.routeTag].stopsInfo[d.stopTag].title;
-          var stop2Title = routesInfo[d.routeTag].stopsInfo[d.destTag].title;
+          var stopTitle = nb.routesInfo[d.routeTag].stopsInfo[d.stopTag].title;
+          var stop2Title = nb.routesInfo[d.routeTag].stopsInfo[d.destTag].title;
 
           updateTitle(stopTitle + ' to ' + stop2Title);
           updateCenter(centerTextData);

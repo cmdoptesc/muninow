@@ -1,8 +1,6 @@
 
 // stores information of the routes the user has looked up for the session
-var routesInfo = {
-  routesList: {}
-};
+var nb = nextBusser();
 
 $(function() {
   var charts = [];
@@ -11,23 +9,23 @@ $(function() {
     var routeTag = $("#RouteSelector").val();
 
       // if the route hasn't been looked up before, look it up and store it in routesInfo
-    if(typeof routesInfo[routeTag] === 'undefined') {
-      getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
-        routesInfo[routeTag] = parseXMLstops(xml);
-        displayDirections(routesInfo[routeTag].stopsInfo, routesInfo[routeTag].directions);
+    if(nb.routesInfo[routeTag] && typeof nb.routesInfo[routeTag].stopsInfo === 'undefined') {
+      nb.getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
+        _.extend(nb.routesInfo[routeTag], nb.parseXMLstops(xml));
+        displayDirections(nb.routesInfo[routeTag].stopsInfo, nb.routesInfo[routeTag].directions);
       });
     } else {
-      displayDirections(routesInfo[routeTag].stopsInfo, routesInfo[routeTag].directions);
+      displayDirections(nb.routesInfo[routeTag].stopsInfo, nb.routesInfo[routeTag].directions);
     }
   });
 
   $("#DirectionSelector").change(function(){
-    var route = routesInfo[$("#RouteSelector").val()];
+    var route = nb.routesInfo[$("#RouteSelector").val()];
     displayStops(route.stopsInfo, route.directions, $("#DirectionSelector").val());
   });
 
   $("#StopSelector").change(function(){
-    var route = routesInfo[$("#RouteSelector").val()];
+    var route = nb.routesInfo[$("#RouteSelector").val()];
     var stopTag = $("#StopSelector").val();
     displayDestinations(route.stopsInfo, route.directions, $("#DirectionSelector").val(), stopTag);
   });
@@ -130,7 +128,8 @@ $(function() {
     // insert the routes into the drop down and also create a lookup hash
   _(routesToInsert).each(function(route){
     $("#RouteSelector").append('<option value="'+ route[0] +'">'+ route[1] +'</option>');
-    routesInfo.routesList[route[0]] = route[1];
+    nb.routesInfo[route[0]] = {};
+    nb.routesInfo[route[0]].title = route[1];
   });
 
   var recursiveAsyncGoodness = function(queries, indx) {
