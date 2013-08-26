@@ -383,7 +383,10 @@ var d3methods = {
       //  loop below is to see if there is a highlighted arc
     var hasHighlight = false;
     gArc.select("path.arc-path").each(function(d){
-      if( this.classList.contains('highlighted') || this.classList.contains('highlighted2') ) { hasHighlight = true; }
+      if( this.classList.contains('highlighted') || this.classList.contains('highlighted2') ) {
+        hasHighlight = true;
+        centerTextData = [d3.select(this).datum()];
+      }
     });
 
       // re-colors the arcs, if there is no highlighted arc (from above), highlight the first one
