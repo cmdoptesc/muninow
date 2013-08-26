@@ -140,7 +140,7 @@ $(function() {
             routeTag = queries[indx].r;
 
         getNextbus({command: 'routeConfig', a:'sf-muni', r: routeTag}, function(xml) {
-          routesInfo[routeTag] = parseXMLstops(xml);
+          nb.routesInfo[routeTag] = parseXMLstops(xml);
           (indx===0) ? charts.push(makeChart(stopTag, routeTag)) : updateChart(stopTag, routeTag, charts[0]);
           recursiveAsyncGoodness(queries, indx+1);
         });
