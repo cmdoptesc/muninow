@@ -1,4 +1,4 @@
-var nextBusser = function(agency){
+var nextBusser = function(agency) {
   var nb = {
 
     routesInfo: {},
@@ -51,9 +51,9 @@ var nextBusser = function(agency){
       $(xml).find("body > route").each(function(indx, rt){
         $rt = $(rt);
         route = {
-          routeTag: $rt.attr("tag"),
-          routeTitle: $rt.attr("title")
-        }
+          routeTag: $rt.attr('tag'),
+          routeTitle: $rt.attr('title')
+        };
         routes.push(route);
       });
       return callback ? callback(routes) : routes;
@@ -65,39 +65,39 @@ var nextBusser = function(agency){
       var directions = {};
       var $dir, dirTag;
 
-      $(xml).find("direction").each(function(indx, dir){
+      $(xml).find('direction').each(function(indx, dir){
         var $dir = $(dir);
-        dirTag = $dir.attr("tag");
+        dirTag = $dir.attr('tag');
         directions[dirTag] = {
-          'title' : $dir.attr("title"),
-          'name' : $dir.attr("name"),
-          'dirTag': dirTag,
-          'stops' : []
+          title : $dir.attr('title'),
+          name : $dir.attr('name'),
+          dirTag: dirTag,
+          stops : []
         };
-        $dir.find("stop").each(function(indx, stop) {
-          directions[dirTag].stops.push($(stop).attr("tag"));
+        $dir.find('stop').each(function(indx, stop) {
+          directions[dirTag].stops.push($(stop).attr('tag'));
         });
       });
 
       var $route = $(xml).find("body > route");
 
       var stopsInfo = {
-        routeTag: $route.attr("tag"),
-        title: $route.attr("title"),
-        color: $route.attr("color"),
-        oppositeColor: $route.attr("oppositeColor")
+        routeTag: $route.attr('tag'),
+        title: $route.attr('title'),
+        color: $route.attr('color'),
+        oppositeColor: $route.attr('oppositeColor')
       };
 
       var $stop, stopTag;
 
       $(xml).find("body route > stop").each(function(indx, stop) {
         $stop = $(stop);
-        stopTag = $stop.attr("tag");
+        stopTag = $stop.attr('tag');
         stopsInfo[stopTag] = {
-          'title' : $stop.attr("title"),
-          'lat' : $stop.attr("lat"),
-          'lon' : $stop.attr("lon"),
-          'stopId' : $stop.attr("stopId")
+          title : $stop.attr('title'),
+          lat : $stop.attr('lat'),
+          lon : $stop.attr('lon'),
+          stopId : $stop.attr('stopId')
         };
       });
 
@@ -281,7 +281,7 @@ var nextBusser = function(agency){
 
         return callback ? callback(routes) : routes;
       });
-    }    
+    }
   };
 
   if(typeof agency === 'string') {
@@ -289,5 +289,6 @@ var nextBusser = function(agency){
       return nb;
     });
   }
+
   return nb;
 };
