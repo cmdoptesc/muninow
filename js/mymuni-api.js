@@ -38,7 +38,7 @@ var nextBusser = function(agency) {
     _buildQuery: function(baseQuery, stopsArray, destsArray) {
       for(var i=0; i<stopsArray.length; i++) {
         baseQuery += '&stops='+ stopsArray[i].r +'|'+ stopsArray[i].s;
-        if(destsArray && destsArray[i]) { baseQuery += '&stops='+ destsArray[i].r +'|'+ destsArray[i].s; }
+        if(destsArray && typeof destsArray[i] !== 'undefined') { baseQuery += '&stops='+ destsArray[i].r +'|'+ destsArray[i].s; }
       }
       return baseQuery;
     },
